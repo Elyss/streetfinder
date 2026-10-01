@@ -5,7 +5,7 @@ set +a
 
 ACTION="$1"
 TARGET="$2"
-ENV="$3"  # Optional for front and proxy builds
+ENV="$3"  # Only used for front builds
 
 docker_login() {
   if [ -z "$DOCKER_USERNAME" ] || [ -z "$DOCKER_PASSWORD" ]; then
@@ -25,11 +25,11 @@ case "$ACTION" in
 
   #---------------------------------------
   # 1) PUSH ACTION
-  #    ./run.sh push [front|back|proxy] [prod|preprod]
+  #    ./run.sh push [front|back] [prod|preprod]
   #---------------------------------------
   push)
     if [ -z "$TARGET" ]; then
-      echo "No image specified (front | back | proxy)."
+      echo "No image specified (front | back)."
       exit 1
     fi
 
@@ -70,34 +70,8 @@ case "$ACTION" in
         cd ..
         ;;
 
-      proxy)
-        if [ -z "$ENV" ]; then
-          echo "Please specify the environment for proxy (prod | preprod)."
-          exit 1
-        fi
-
-        case "$ENV" in
-          prod)
-            NGINX_CONF="nginx.prod.conf"
-            ;;
-          preprod)
-            NGINX_CONF="nginx.preprod.conf"
-            ;;
-          *)
-            echo "Unknown environment '$ENV'. Please use 'prod' or 'preprod'."
-            exit 1
-            ;;
-        esac
-
-        echo "Building and pushing Reverse Proxy ($ENV)..."
-        docker build -f Dockerfile.reverse-proxy \
-          --build-arg NGINX_CONF=$NGINX_CONF \
-          -t elyssfr/streetfinder-reverse-proxy:latest .
-        docker push elyssfr/streetfinder-reverse-proxy:latest
-        ;;
-
       *)
-        echo "Unknown image '$TARGET'. Please use 'front', 'back', or 'proxy'."
+        echo "Unknown image '$TARGET'. Please use 'front' or 'back'."
         exit 1
         ;;
     esac

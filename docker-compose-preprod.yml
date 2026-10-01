@@ -1,13 +1,16 @@
 services:
   reverse-proxy:
-    image: elyssfr/streetfinder-reverse-proxy:latest
+    image: caddy:2
     container_name: streetfinder-reverse-proxy
     ports:
       - "80:80"
       - "443:443"
+    environment:
+      - DOMAIN=preprod-CHANGEME.example.com
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-      - /var/www/certbot:/var/www/certbot:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data  # Certificates, must persist across restarts
+      - caddy_config:/config
       - ./staticfiles:/staticfiles:ro
     depends_on:
       - frontend
@@ -64,3 +67,5 @@ services:
 volumes:
   pgdata:
   pgadmin_data:
+  caddy_data:
+  caddy_config:

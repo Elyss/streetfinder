@@ -136,3 +136,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5174")
 
 CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
+
+# Behind the Caddy reverse proxy, which terminates HTTPS and sets X-Forwarded-Proto
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

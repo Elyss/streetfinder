@@ -1,0 +1,27 @@
+# Reverse proxy for prod and preprod. DOMAIN is set in the compose file.
+# Caddy obtains and renews the Let's Encrypt certificate automatically
+# and redirects HTTP to HTTPS.
+{$DOMAIN:localhost} {
+	# Serve static files from Django
+	handle_path /static/* {
+		root * /staticfiles # This path must match where you mount your staticfiles
+		header Cache-Control "public, max-age=2592000"
+		file_server
+	}
+
+	# For pgadmin (served under /pgadmin via SCRIPT_NAME)
+	handle /pgadmin* {
+		reverse_proxy pgadmin:80
+	}
+
+	# For the Django backend (API and admin)
+	@backend path /api/* /admin/*
+	handle @backend {
+		reverse_proxy backend:8000
+	}
+
+	# For the frontend
+	handle {
+		reverse_proxy frontend:80
+	}
+}
