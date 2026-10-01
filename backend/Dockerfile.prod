@@ -1,0 +1,31 @@
+# Use an official Python runtime as a parent image
+FROM python:3.13-slim
+
+# Prevent Python from writing .pyc files and buffer output
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Set working directory in the container
+WORKDIR /app
+
+# Install system dependencies (if needed)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy dependency file and install Python dependencies
+COPY requirements.txt /app/
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy the rest of the application code
+COPY . /app/
+
+# Expose port 8000 for the application
+EXPOSE 8000
+
+# collectstatic runs at container start, not at build time: settings.py requires
+# POSTGRES_* vars that only exist at runtime (env_file), and /app/staticfiles is
+# bind-mounted from the host, which would hide files collected into the image.
+# Gunicorn is exec'd so it stays PID 1 and receives stop signals.
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 300"]

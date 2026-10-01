@@ -1,0 +1,30 @@
+@use "./buttons" as *;
+
+// Global styles included on every page.
+body{
+    background-color: #f8faff;
+    padding: 0;
+    margin: 0;
+    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    color: #424853;
+}
+
+h1,h2{
+    color: oklch(0.27 0.02 265);
+}
+
+b{
+    color: oklch(0.27 0.02 265);
+}
+
+a{
+    color: #424853;
+    font-weight: 600;
+
+    text-decoration: none;
+    &:hover{
+        color: #4354b9;
+        text-decoration: underline;
+        font-weight: 600;
+    }
+}

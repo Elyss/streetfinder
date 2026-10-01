@@ -1,0 +1,35 @@
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Vite env files: no secrets, only public VITE_ vars (dev/preprod/prod API URLs)
+!frontend/.env.development
+!frontend/.env.preprod
+!frontend/.env.production
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+npm-debug.log*
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+staticfiles/
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
