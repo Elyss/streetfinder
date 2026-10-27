@@ -288,8 +288,25 @@ export const useBoardStore = defineStore("board", () => {
     sendPresence()
   }
 
+  // Objects the elbow routing tries to avoid. Read without reactivity on purpose:
+  // a route is recomputed when its own ends move, not whenever anything moves.
+  function obstaclesFor(conn) {
+    const out = []
+    const skip = new Set([conn.from?.id, conn.to?.id])
+    for (const it of Object.values(toRaw(items))) {
+      if (it.type === "connector" || it.type === "frame" || it.type === "text" || skip.has(it.id)) continue
+      out.push(rectOf(it))
+    }
+    return out
+  }
+
+  /** Path of a connector, the same everywhere: drawing, selection, handles, labels, bounds. */
+  function routeOf(conn) {
+    return connectorGeometry(conn, items, (conn.style?.route || "elbow") === "elbow" ? obstaclesFor(conn) : [])
+  }
+
   function bounds(it) {
-    if (it.type === "connector") return connectorGeometry(it, items).bounds
+    if (it.type === "connector") return routeOf(it).bounds
     return rectOf(it)
   }
 
@@ -393,7 +410,7 @@ export const useBoardStore = defineStore("board", () => {
     for (const it of list) {
       if (it.type !== "connector") continue
       // Ends attached outside the copy become free points at their current position
-      const geom = connectorGeometry(items[it.id], items)
+      const geom = routeOf(items[it.id])
       if (it.from?.id && !set.has(it.from.id)) it.from = { ...geom.start.p }
       if (it.to?.id && !set.has(it.to.id)) it.to = { ...geom.end.p }
     }
@@ -461,7 +478,7 @@ export const useBoardStore = defineStore("board", () => {
     peers, me, exporting, canUndo, canRedo, role, readOnly,
     open, close, setMeta, sendPresence, setIdentity,
     begin, commit, mutate, addItem, updateItem, updateStyle, removeItems, undo, redo,
-    select, withGroups, bounds, boundsOf,
+    select, withGroups, bounds, boundsOf, routeOf,
     zOrder, group, ungroup, align, distribute, matchSize, changeShape,
     copyPayload, pastePayload, copyStyle, pasteStyle,
     makeItem,

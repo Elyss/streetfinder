@@ -17,9 +17,9 @@
 </template>
 
 <script setup>
-import { computed, toRaw } from "vue"
+import { computed } from "vue"
 import { FONTS, dashArray } from "../lib/defaults"
-import { capShapes, connectorGeometry, pointAt, rectOf } from "../lib/geometry"
+import { capShapes, pointAt } from "../lib/geometry"
 import { useBoardStore } from "../store"
 
 const props = defineProps({
@@ -32,19 +32,7 @@ const store = useBoardStore()
 const style = computed(() => props.conn.style || {})
 const sw = computed(() => style.value.strokeWidth || 2)
 
-// Objects the elbow routing tries to avoid. Read without reactivity on purpose:
-// the route is recomputed when its own ends move, not whenever anything moves.
-function obstacles() {
-  const out = []
-  const skip = new Set([props.conn.from?.id, props.conn.to?.id])
-  for (const it of Object.values(toRaw(store.items))) {
-    if (it.type === "connector" || it.type === "frame" || it.type === "text" || skip.has(it.id)) continue
-    out.push(rectOf(it))
-  }
-  return out
-}
-
-const geom = computed(() => connectorGeometry(props.conn, store.items, style.value.route === "elbow" ? obstacles() : []))
+const geom = computed(() => store.routeOf(props.conn))
 
 const caps = computed(() => [
   ...capShapes(style.value.startCap, geom.value.start.p, geom.value.start.angle, sw.value),

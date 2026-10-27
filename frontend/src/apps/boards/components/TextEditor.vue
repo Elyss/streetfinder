@@ -13,7 +13,7 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue"
 import { FONTS } from "../lib/defaults"
-import { connectorGeometry, pointAt } from "../lib/geometry"
+import { pointAt } from "../lib/geometry"
 import { plainText, sanitize } from "../lib/sanitize"
 import { neededHeight, textBoxStyle, textContentStyle } from "../lib/text"
 import { useBoardStore } from "../store"
@@ -37,7 +37,7 @@ const anchor = computed(() => {
   if (mode.value === "rich") return { x: it.x, y: it.y }
   if (mode.value === "title") return { x: it.x, y: it.y - 30 }
   const label = it.labels?.[store.editing.label]
-  const p = pointAt(connectorGeometry(it, store.items).samples, label?.t ?? 0.5)
+  const p = pointAt(store.routeOf(it).samples, label?.t ?? 0.5)
   return { x: p.x - 80, y: p.y - 14 }
 })
 

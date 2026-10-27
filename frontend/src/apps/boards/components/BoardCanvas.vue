@@ -42,7 +42,7 @@
 
           <!-- Own selection -->
           <template v-for="it in store.selectedItems" :key="'sel' + it.id">
-            <path v-if="it.type === 'connector'" :d="connectorGeometry(it, store.items).hit" fill="none" stroke="#5366ce"
+            <path v-if="it.type === 'connector'" :d="store.routeOf(it).hit" fill="none" stroke="#5366ce"
               stroke-opacity="0.35" :stroke-width="(it.style?.strokeWidth || 2) + 6 / view.zoom" stroke-linecap="round" stroke-linejoin="round" />
             <rect v-else :x="it.x" :y="it.y" :width="it.w" :height="it.h" fill="none" :stroke="it.locked ? '#9aa1ad' : '#5366ce'"
               :stroke-width="1.5 / view.zoom" :stroke-dasharray="it.locked ? `${4 / view.zoom}` : null" />
@@ -265,7 +265,7 @@ const selectedConnector = computed(() => {
 })
 const connectorEnds = computed(() => {
   const c = selectedConnector.value
-  const g = connectorGeometry(c, store.items)
+  const g = store.routeOf(c)
   return [
     { end: "from", p: g.start.p, attached: !!c.from?.id },
     { end: "to", p: g.end.p, attached: !!c.to?.id },
@@ -558,7 +558,7 @@ function onMove(e) {
     case "label": {
       const conn = store.items[d.id]
       if (!conn) return
-      const t = nearestT(connectorGeometry(conn, store.items).samples, w)
+      const t = nearestT(store.routeOf(conn).samples, w)
       const labels = conn.labels.map((l, i) => (i === d.index ? { ...l, t } : l))
       store.updateItem(d.id, { labels })
       break
@@ -902,7 +902,7 @@ function onDblClick(e) {
     const it = store.items[hit.id]
     if (!it || it.locked) return
     if (it.type === "connector") {
-      const t = nearestT(connectorGeometry(it, store.items).samples, w)
+      const t = nearestT(store.routeOf(it).samples, w)
       const labels = [...(it.labels || []), { t, text: "" }]
       store.updateItem(it.id, { labels })
       store.select([it.id])
