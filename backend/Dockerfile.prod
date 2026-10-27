@@ -27,5 +27,5 @@ EXPOSE 8000
 # collectstatic runs at container start, not at build time: settings.py requires
 # POSTGRES_* vars that only exist at runtime (env_file), and /app/staticfiles is
 # bind-mounted from the host, which would hide files collected into the image.
-# Gunicorn is exec'd so it stays PID 1 and receives stop signals.
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 300"]
+# Daphne (ASGI, needed for the board WebSockets) is exec'd so it stays PID 1 and receives stop signals.
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && exec daphne -b 0.0.0.0 -p 8000 config.asgi:application"]

@@ -28,3 +28,97 @@ a{
         font-weight: 600;
     }
 }
+
+// ------------------------------------------------------------------ forms (accounts pages)
+.form-card{
+    box-sizing: border-box;
+    width: min(460px, calc(100% - 2rem));
+    margin: 3rem auto;
+    padding: 2rem;
+    background-color: white;
+    border: 1px solid #e5e9f0;
+    border-radius: 15px;
+
+    h1{
+        margin: 0 0 0.5rem;
+        font-size: 1.7em;
+    }
+
+    > p{
+        margin: 0 0 1.25rem;
+        line-height: 1.5;
+    }
+
+    form{
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    label{
+        margin-top: 0.6rem;
+        font-size: 0.9em;
+        font-weight: 600;
+        color: oklch(0.27 0.02 265);
+    }
+
+    input:not([type="checkbox"]), select{
+        box-sizing: border-box;
+        width: 100%;
+        padding: 0.65rem 0.8rem;
+        border: 1px solid #dbdee3;
+        border-radius: 8px;
+        font: inherit;
+        color: #2e333d;
+        background: white;
+
+        &:focus{
+            outline: none;
+            border-color: #5366ce;
+            box-shadow: 0 0 0 3px #ecf1ff;
+        }
+
+        &:disabled{
+            color: #8a909b;
+            background: #f9fafd;
+            cursor: not-allowed;
+        }
+    }
+
+    .btn{
+        margin-top: 1.2rem;
+        width: 100%;
+    }
+
+    .links{
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.25rem;
+        font-size: 0.9em;
+    }
+}
+
+.form-error{
+    margin: 0.5rem 0 0;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    background: #FBE6E4;
+    color: #C62525;
+    font-size: 0.9em;
+}
+
+.form-success{
+    margin: 0.5rem 0 0;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    background: #E3F5EB;
+    color: #27905C;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+.btn:hover{
+    text-decoration: none;
+}

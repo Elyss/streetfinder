@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 from decouple import config
 
@@ -39,6 +40,8 @@ ALLOWED_HOSTS = config(
 # Application definition
 
 INSTALLED_APPS = [
+    # daphne must come first: it makes runserver serve ASGI (WebSockets)
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,9 +49,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     "rest_framework",
+    "rest_framework_simplejwt",
     "corsheaders",
+    "channels",
     "apps.core",
+    "apps.accounts",
     "apps.characters",
+    "apps.boards",
 ]
 
 MIDDLEWARE = [
@@ -80,6 +87,21 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+ASGI_APPLICATION = 'config.asgi.application'
+
+# Real-time boards. Redis is required as soon as several backend processes run;
+# without REDIS_URL an in-memory layer is used (single process only).
+REDIS_URL = config("REDIS_URL", default="")
+
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [REDIS_URL]},
+        }
+    }
+else:
+    CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
 
 # Database
@@ -133,6 +155,43 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Uploaded files (board images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
+
+# Accounts: login by e-mail, JWT tokens. Every endpoint requires an account activated
+# by an admin, unless a view says otherwise (login, registration, password reset...).
+AUTH_USER_MODEL = "accounts.User"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework_simplejwt.authentication.JWTAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["apps.accounts.permissions.IsActivated"],
+    # Only applied to the views declaring a throttle (registration, forgotten password)
+    "DEFAULT_THROTTLE_RATES": {"anon": "30/hour"},
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+# Invitation and password reset links stay valid 3 days
+PASSWORD_RESET_TIMEOUT = 3 * 24 * 3600
+
+# Transactional e-mails (apps/accounts/mail.py), sent with Django's SMTP mailer.
+# In dev, EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend prints them in the logs.
+EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = config("EMAIL_HOST", default="localhost")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", default=False, cast=bool)
+EMAIL_TIMEOUT = 10
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Delay Lama <noreply@elyss.fr>")
 
 FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:5174")
 

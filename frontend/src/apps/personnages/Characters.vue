@@ -16,7 +16,16 @@
         :to="{ name: 'character', params: { slug: character.slug } }"
         class="character-card"
       >
-        <span class="initial">{{ character.name[0] }}</span>
+        <!-- Portrait (public/characters/<slug>.webp); the initial remains when there is none -->
+        <img
+          v-if="!missingPortraits.has(character.slug)"
+          :src="`/characters/${character.slug}.webp`"
+          :alt="''"
+          class="portrait"
+          loading="lazy"
+          @error="missingPortraits.add(character.slug)"
+        >
+        <span v-else class="initial">{{ character.name[0] }}</span>
         <span class="name">{{ character.name }}</span>
         <span class="vitality">Vitalité&nbsp;: {{ character.vitality }}</span>
       </router-link>
@@ -26,12 +35,13 @@
 
 
 <script setup>
-import { onMounted, ref } from "vue"
+import { onMounted, reactive, ref } from "vue"
 import Header from "@/apps/Header.vue"
 import api from "@/api/axios"
 
 const characters = ref([])
 const status = ref("loading")
+const missingPortraits = reactive(new Set())
 
 const loadCharacters = async () => {
   try {
@@ -83,6 +93,15 @@ h1 {
     text-decoration: none;
     border-color: #5366ce;
     box-shadow: 0 4px 14px rgba(83, 102, 206, 0.15);
+  }
+
+  .portrait {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #ecf1ff;
+    box-shadow: 0 0 0 2px #ecf1ff;
   }
 
   .initial {

@@ -12,6 +12,7 @@ services:
       - caddy_data:/data  # Certificates, must persist across restarts
       - caddy_config:/config
       - ./staticfiles:/staticfiles:ro
+      - ./media:/media:ro
     depends_on:
       - frontend
       - backend
@@ -21,15 +22,19 @@ services:
     container_name: streetfinder-backend
     volumes:
       - ./staticfiles:/app/staticfiles  # So that /app/staticfiles in the container is synced to ./staticfiles on the host
+      - ./media:/app/media  # Board images uploaded by users, served by Caddy
     environment:
       - DEBUG=False
       - ALLOWED_HOSTS=preprod-CHANGEME.example.com
       - FRONTEND_URL=https://preprod-CHANGEME.example.com
+      - REDIS_URL=redis://redis:6379/0
     expose:
       - "8000"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     env_file:
       - .env
 
@@ -49,6 +54,10 @@ services:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
       interval: 5s
       retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: streetfinder-redis
 
   pgadmin:
     image: dpage/pgadmin4:latest

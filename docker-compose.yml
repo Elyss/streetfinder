@@ -14,11 +14,15 @@ services:
     env_file: .env
     volumes:
       - ./backend:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/0
     ports:
       - "8020:8000"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
 
   frontend:
     build: ./frontend
@@ -30,13 +34,16 @@ services:
     depends_on:
       - backend
 
+  redis:
+    image: redis:7-alpine
+
   pgadmin:
     image: dpage/pgadmin4:latest
     env_file: .env
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     ports:
-      - "5053:80"
+      - "5054:80"
     depends_on:
       - db
 

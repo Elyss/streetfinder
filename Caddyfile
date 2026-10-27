@@ -9,13 +9,22 @@
 		file_server
 	}
 
+	# Board images uploaded by users. Untrusted content (SVG may embed scripts),
+	# hence the sandbox CSP and nosniff.
+	handle_path /media/* {
+		root * /media
+		header Content-Security-Policy "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox"
+		header X-Content-Type-Options nosniff
+		file_server
+	}
+
 	# For pgadmin (served under /pgadmin via SCRIPT_NAME)
 	handle /pgadmin* {
 		reverse_proxy pgadmin:80
 	}
 
-	# For the Django backend (API and admin)
-	@backend path /api/* /admin/*
+	# For the Django backend (API, admin and board WebSockets)
+	@backend path /api/* /admin/* /ws/*
 	handle @backend {
 		reverse_proxy backend:8000
 	}
