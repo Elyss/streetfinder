@@ -36,14 +36,25 @@
           :key="tab.key"
           :to="{ name: 'input-breaker', params: { tab: tab.param } }"
           class="tab"
-          :class="{ active: tab.key === activeTab }"
+          :class="{ active: tab.key === activeTab, locked: tab.account && !auth.isLoggedIn }"
+          :title="tab.account && !auth.isLoggedIn ? 'Connectez-vous pour retrouver vos combos' : null"
         >
           {{ tab.label }}
         </router-link>
       </nav>
 
       <DpDrill v-if="activeTab === 'dp'" :pad="pad" />
-      <MyCombos v-else-if="activeTab === 'combos'" :pad="pad" />
+      <template v-else-if="activeTab === 'combos'">
+        <MyCombos v-if="auth.isLoggedIn" :pad="pad" />
+        <section v-else class="main">
+          <h2>Mes combos</h2>
+          <p class="hint">
+            Les combos se construisent dans l'onglet « Combo builder » d'un personnage, et s'enregistrent sur votre compte.
+            <router-link :to="{ name: 'login', query: { next: route.fullPath } }">Connectez-vous</router-link> pour les
+            retrouver ici.
+          </p>
+        </section>
+      </template>
 
       <template v-else>
       <section class="main">
@@ -116,16 +127,18 @@ import MyCombos from "./MyCombos.vue"
 import { BUTTONS } from "./gamepad"
 import { FRAME_MS } from "./dp"
 import { useGamepad } from "./useGamepad"
+import { useAuthStore } from "@/stores/auth"
 
 const HISTORY_SIZE = 40
 
 const TABS = [
   { key: "viewer", label: "Visualiseur", param: "" },
   { key: "dp", label: "Exercice DP", param: "dp" },
-  { key: "combos", label: "Mes combos", param: "combos" },
+  { key: "combos", label: "Mes combos", param: "combos", account: true },
 ]
 
 const route = useRoute()
+const auth = useAuthStore()
 const activeTab = computed(() => (["dp", "combos"].includes(route.params.tab) ? route.params.tab : "viewer"))
 
 const pad = useGamepad()
@@ -205,6 +218,15 @@ h1 {
   gap: 1.5rem;
   margin-bottom: 1.5rem;
   border-bottom: 1px solid var(--border);
+}
+
+// Feature that needs an account: greyed, leads to the login page
+.locked {
+  opacity: 0.45;
+
+  &:hover {
+    opacity: 0.75;
+  }
 }
 
 .tab {

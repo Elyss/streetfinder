@@ -71,9 +71,14 @@ api.interceptors.response.use(
     const request = error.config
     if (error.response?.status !== 401 || request._retry || /\/api\/auth\/(login|refresh)\//.test(request.url)) throw error
     request._retry = true
-    const access = await refreshAccess().catch(() => {
-      throw error
-    })
+    let access
+    try {
+      access = await refreshAccess()
+    } catch {
+      // Session over: replay without it, public endpoints (move lists...) still answer
+      delete request.headers.Authorization
+      return api(request)
+    }
     request.headers.Authorization = `Bearer ${access}`
     return api(request)
   },

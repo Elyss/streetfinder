@@ -230,14 +230,15 @@ const tiles = computed(() => [
       content: "";
       position: absolute;
       inset: -15%;
-      background: radial-gradient(closest-side, rgba(255, 90, 31, 0.35), rgba(255, 90, 31, 0.08) 60%, transparent);
+      // Soft glow: it must not blur the title next to it
+      background: radial-gradient(closest-side, rgba(255, 122, 47, 0.14), rgba(255, 122, 47, 0.03) 60%, transparent);
       z-index: -1;
     }
 
     img {
       width: min(100%, 560px);
       height: auto;
-      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.6));
+      filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.45));
     }
   }
 }

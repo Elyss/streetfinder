@@ -20,10 +20,12 @@ const routes = [
   { path: "/utilisateurs", name: "users", component: () => import("@/apps/accounts/Users.vue"), meta: { requiresAuth: true, admin: true } },
   { path: "/utilisateurs/ajouter", name: "add-user", component: () => import("@/apps/accounts/AddUser.vue"), meta: { requiresAuth: true, admin: true } },
 
-  // -- Apps (activated accounts) --
-  { path: "/characters", name: "characters", component: () => import("@/apps/personnages/Characters.vue"), meta: { requiresAuth: true } },
-  { path: "/characters/:slug/:tab(combo|builder)?", name: "character", component: () => import("@/apps/personnages/Character.vue"), meta: { requiresAuth: true } },
-  { path: "/inputbreaker/:tab(dp|combos)?", name: "input-breaker", component: () => import("@/apps/inputbreaker/InputBreaker.vue"), meta: { requiresAuth: true } },
+  // -- Open without an account (saving needs one: combos...) --
+  { path: "/characters", name: "characters", component: () => import("@/apps/personnages/Characters.vue") },
+  { path: "/characters/:slug/:tab(combo|builder)?", name: "character", component: () => import("@/apps/personnages/Character.vue") },
+  { path: "/inputbreaker/:tab(dp|combos)?", name: "input-breaker", component: () => import("@/apps/inputbreaker/InputBreaker.vue") },
+
+  // -- Activated accounts --
   { path: "/boards", name: "boards", component: () => import("@/apps/boards/BoardsList.vue"), meta: { requiresAuth: true } },
   // Share link (write or read): the user joins the board with that right
   // Public: without an account, a valid link gives access to the board (?share=<token>)

@@ -80,10 +80,12 @@
           <line v-for="(g, i) in guides" :key="'g' + i" :x1="g.x1" :y1="g.y1" :x2="g.x2" :y2="g.y2" stroke="#e5484d"
             :stroke-width="1 / view.zoom" />
 
-          <rect v-if="drag?.kind === 'marquee'" v-bind="rectFromPoints(drag.start, drag.cur)" fill="rgba(83,102,206,.08)"
-            stroke="#5366ce" :stroke-width="1 / view.zoom" />
-          <rect v-if="drag?.kind === 'create' && createPreview" v-bind="createPreview" fill="rgba(83,102,206,.06)"
-            stroke="#5366ce" :stroke-width="1.5 / view.zoom" :stroke-dasharray="`${5 / view.zoom}`" />
+          <!-- Selection area being dragged -->
+          <rect v-if="marqueeRect" :x="marqueeRect.x" :y="marqueeRect.y" :width="marqueeRect.w" :height="marqueeRect.h"
+            fill="rgba(83,102,206,.1)" stroke="#5366ce" :stroke-width="1.5 / view.zoom" :rx="2 / view.zoom" />
+          <rect v-if="drag?.kind === 'create' && createPreview" :x="createPreview.x" :y="createPreview.y" :width="createPreview.w"
+            :height="createPreview.h" fill="rgba(83,102,206,.06)" stroke="#5366ce" :stroke-width="1.5 / view.zoom"
+            :stroke-dasharray="`${5 / view.zoom}`" />
           <g v-if="draftGeometry" style="pointer-events: none">
             <path :d="draftGeometry.d" fill="none" stroke="#5366ce" :stroke-width="2" :stroke-dasharray="`${6 / view.zoom}`" />
             <path v-for="(cap, i) in capShapes('arrow', draftGeometry.end.p, draftGeometry.end.angle, 2)" :key="i" :d="cap.d" fill="#5366ce" />
@@ -291,6 +293,11 @@ const affordance = computed(() => {
       return { side, p: { x: p.x + SIDES[side].x * (26 / view.zoom), y: p.y + SIDES[side].y * (26 / view.zoom) } }
     }),
   }
+})
+
+const marqueeRect = computed(() => {
+  const d = drag.value
+  return d?.kind === "marquee" ? rectFromPoints(d.start, d.cur) : null
 })
 
 const createPreview = computed(() => {

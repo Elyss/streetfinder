@@ -9,7 +9,9 @@
                 <nav v-if="!auth.isLoggedIn || auth.isActivated" class="nav">
                     <router-link :to="{ name: 'characters' }">Move lists</router-link>
                     <router-link :to="{ name: 'input-breaker' }">Training</router-link>
-                    <router-link :to="{ name: 'boards' }">Boards</router-link>
+                    <router-link v-if="auth.isLoggedIn" :to="{ name: 'boards' }">Boards</router-link>
+                    <router-link v-else :to="{ name: 'login', query: { next: '/boards' } }" class="locked"
+                        title="Connectez-vous pour utiliser les boards">Boards <Icon name="lock" :size="13" /></router-link>
                     <router-link v-if="auth.isAdmin" :to="{ name: 'users' }">Utilisateurs</router-link>
                 </nav>
                 <span v-else class="nav"></span>
@@ -108,6 +110,22 @@ function logout() {
         &.router-link-active{
             color: var(--text);
             text-decoration: none;
+        }
+
+        // Needs an account: greyed out
+        &.locked{
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            opacity: 0.45;
+
+            &.router-link-active{
+                color: var(--muted);
+            }
+
+            &:hover{
+                opacity: 0.8;
+            }
         }
     }
 }

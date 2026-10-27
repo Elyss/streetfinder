@@ -9,7 +9,8 @@
       <div class="actions">
         <button class="btn btn-secondary" :disabled="!steps.length || practicing" @click="steps.pop()">Retirer le dernier</button>
         <button class="btn btn-secondary" :disabled="(!steps.length && !editingId) || practicing" @click="newCombo">Nouveau</button>
-        <button class="btn btn-secondary" :disabled="!steps.length || !name.trim() || saving || practicing" @click="save">
+        <button class="btn btn-secondary" :disabled="!auth.isLoggedIn || !steps.length || !name.trim() || saving || practicing"
+          :title="auth.isLoggedIn ? null : 'Connectez-vous pour enregistrer vos combos'" @click="save">
           {{ saving ? "Enregistrement…" : "Enregistrer" }}
         </button>
         <button v-if="!practicing" class="btn btn-primary" :disabled="!steps.length" @click="startPractice">Practice</button>
@@ -84,7 +85,12 @@
   <!-- Saved combos -->
   <section class="main">
     <h2>Mes combos</h2>
-    <p v-if="!saved.length" class="hint">Aucun combo enregistré pour {{ character.name }}.</p>
+    <p v-if="!auth.isLoggedIn" class="hint">
+      Vous pouvez construire et pratiquer un combo sans compte.
+      <router-link :to="{ name: 'login', query: { next: route.fullPath } }">Connectez-vous</router-link>
+      pour l'enregistrer et le retrouver ici et dans l'Input breaker.
+    </p>
+    <p v-else-if="!saved.length" class="hint">Aucun combo enregistré pour {{ character.name }}.</p>
     <ul v-else class="saved">
       <li v-for="combo in saved" :key="combo.id" :class="{ active: combo.id === editingId }">
         <div class="saved-info">
@@ -104,7 +110,9 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue"
+import { useRoute } from "vue-router"
 import api from "@/api/axios"
+import { useAuthStore } from "@/stores/auth"
 import { CATEGORY_LABELS } from "@/utils/moves"
 import { useGamepad } from "@/apps/inputbreaker/useGamepad"
 import ComboPractice from "./ComboPractice.vue"
@@ -115,6 +123,9 @@ import { useStepCapture } from "./useStepCapture"
 const props = defineProps({
   character: { type: Object, required: true },
 })
+
+const route = useRoute()
+const auth = useAuthStore()
 
 const steps = ref([])
 const name = ref("")
@@ -179,6 +190,7 @@ function startPractice() {
 // ------------------------------------------------------------------ saved combos
 
 async function loadSaved() {
+  if (!auth.isLoggedIn) return
   try {
     const { data } = await api.get("/api/combos/", { params: { character: props.character.slug } })
     saved.value = data

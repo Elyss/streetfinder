@@ -3,19 +3,21 @@
 // ------------------------------------------------------------------ theme
 // Fighting-game look: night background, cream text, fire orange and yellow.
 :root{
-    --bg: #0c0a10;
-    --bg-2: #120e17;
-    --surface: #17131d;
-    --surface-2: #211b29;
-    --border: #2a2233;
-    --border-strong: #3b3146;
+    // Violet-tinted anthracite rather than pure black
+    --bg: #1d1a24;
+    --bg-2: #232029;
+    --surface: #29252f;
+    --surface-2: #332e3b;
+    --border: #3b3446;
+    --border-strong: #4d4459;
     --text: #f4ede4;
-    --muted: #a59dae;
+    --muted: #bcb4c6;
 
-    --accent: #ff5a1f;
-    --accent-hover: #ff7438;
-    --accent-soft: rgba(255, 90, 31, 0.13);
-    --accent-border: rgba(255, 90, 31, 0.45);
+    // #ff7a2f: about 7.5:1 against dark text, readable on the background too
+    --accent: #ff7a2f;
+    --accent-hover: #ff9150;
+    --accent-soft: rgba(255, 122, 47, 0.14);
+    --accent-border: rgba(255, 122, 47, 0.45);
     --on-accent: #170c07;
     --yellow: #fbbf24;
 
