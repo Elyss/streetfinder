@@ -32,7 +32,7 @@
 
   <div v-else class="main">
     <div class="intro">
-      <h1>Bonjour <span class="hot">{{ auth.firstName }}</span></h1>
+      <h1>Bonjour <span class="hot">{{ auth.pseudo }}</span></h1>
       <p>{{ auth.isAdmin ? "Administrateur" : "Joueur" }} · Ready? Fight!</p>
     </div>
 

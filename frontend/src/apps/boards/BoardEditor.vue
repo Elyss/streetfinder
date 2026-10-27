@@ -595,7 +595,7 @@ function onGlobalPointerDown(e) {
 
 onMounted(() => {
   // Collaborators see the name of the account
-  store.setIdentity({ name: auth.fullName || store.me.name })
+  store.setIdentity({ name: auth.pseudo || store.me.name })
   load()
   window.addEventListener("keydown", onKeydown)
   window.addEventListener("beforeunload", onBeforeUnload)

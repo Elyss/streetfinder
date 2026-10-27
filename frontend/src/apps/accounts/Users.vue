@@ -11,7 +11,7 @@
         </section>
 
         <div class="filters">
-            <input v-model="query" type="search" placeholder="Rechercher un nom ou un email" aria-label="Rechercher un utilisateur" />
+            <input v-model="query" type="search" placeholder="Rechercher un pseudo ou un email" aria-label="Rechercher un utilisateur" />
             <label><input v-model="pendingOnly" type="checkbox" /> En attente d'activation ({{ pendingCount }})</label>
         </div>
 
@@ -22,7 +22,7 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Nom</th>
+                        <th>Pseudo</th>
                         <th>Email</th>
                         <th>Inscrit le</th>
                         <th>Compte activé</th>
@@ -32,7 +32,7 @@
                 </thead>
                 <tbody>
                     <tr v-for="u in filtered" :key="u.id" :class="{ me: u.id === auth.id }">
-                        <td data-label="Nom" class="name">{{ u.last_name }} {{ u.first_name }}<span v-if="u.id === auth.id" class="you">vous</span></td>
+                        <td data-label="Pseudo" class="name">{{ u.pseudo }}<span v-if="u.id === auth.id" class="you">vous</span></td>
                         <td data-label="Email" class="email">{{ u.email }}</td>
                         <td data-label="Inscrit le">{{ formatDate(u.date_joined) }}</td>
                         <td data-label="Compte activé">
@@ -90,7 +90,7 @@ const filtered = computed(() => {
     const words = query.value.toLowerCase().split(/\s+/).filter(Boolean)
     return users.value.filter((u) => {
         if (pendingOnly.value && (u.is_activated_by_admin || u.is_admin) && !touched.value.has(u.id)) return false
-        const text = `${u.first_name} ${u.last_name} ${u.email}`.toLowerCase()
+        const text = `${u.pseudo} ${u.email}`.toLowerCase()
         return words.every((w) => text.includes(w))
     })
 })
@@ -124,7 +124,7 @@ async function toggle(user, what) {
 }
 
 async function remove(user) {
-    if (!window.confirm(`Supprimer définitivement le compte de ${user.first_name} ${user.last_name} (${user.email}) ?`)) return
+    if (!window.confirm(`Supprimer définitivement le compte de ${user.pseudo} (${user.email}) ?`)) return
     actionError.value = ""
     busy.value = user.id
     try {

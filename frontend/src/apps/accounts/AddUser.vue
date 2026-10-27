@@ -6,11 +6,8 @@
         <p>La personne recevra un e-mail pour choisir son mot de passe. Son compte est activé d'office.</p>
 
         <form @submit.prevent="submit">
-            <label for="first_name">Prénom</label>
-            <input id="first_name" v-model="firstName" placeholder="Prénom" required />
-
-            <label for="last_name">Nom</label>
-            <input id="last_name" v-model="lastName" placeholder="Nom" required />
+            <label for="pseudo">Pseudo</label>
+            <input id="pseudo" v-model="pseudo" placeholder="Pseudo" maxlength="30" required />
 
             <label for="email">Email</label>
             <input id="email" v-model="email" type="email" placeholder="Email" required />
@@ -22,7 +19,7 @@
 
             <p v-if="error" class="form-error">{{ error }}</p>
             <p v-if="invited" class="form-success">
-                Invitation envoyée à {{ invited.first_name }} {{ invited.last_name }} ({{ invited.email }}).
+                Invitation envoyée à {{ invited.pseudo }} ({{ invited.email }}).
             </p>
 
             <button :disabled="loading || !complete" type="submit" class="btn btn-primary">
@@ -41,19 +38,18 @@ import { computed, ref, watch } from "vue"
 import api from "@/api/axios"
 import Header from "@/apps/Header.vue"
 
-const firstName = ref("")
-const lastName = ref("")
+const pseudo = ref("")
 const email = ref("")
 const isAdmin = ref(false)
 const loading = ref(false)
 const error = ref("")
 const invited = ref(null)
 
-const complete = computed(() => firstName.value.trim() && lastName.value.trim() && email.value.trim())
+const complete = computed(() => pseudo.value.trim() && email.value.trim())
 
 // A new entry hides the previous confirmation
-watch([firstName, lastName, email], ([f, l, e]) => {
-    if (f || l || e) invited.value = null
+watch([pseudo, email], ([p, e]) => {
+    if (p || e) invited.value = null
 })
 
 async function submit() {
@@ -62,12 +58,11 @@ async function submit() {
     loading.value = true
     try {
         const { data } = await api.post("/api/users/", {
-            first_name: firstName.value.trim(),
-            last_name: lastName.value.trim(),
+            pseudo: pseudo.value.trim(),
             email: email.value.trim(),
             is_admin: isAdmin.value,
         })
-        firstName.value = lastName.value = email.value = ""
+        pseudo.value = email.value = ""
         isAdmin.value = false
         invited.value = data
     } catch (e) {

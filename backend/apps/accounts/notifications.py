@@ -12,21 +12,21 @@ from . import mail
 
 def _send(user, subject, html, text):
     try:
-        mail.send_email(user.email, user.full_name, subject, html, text)
+        mail.send_email(user.email, user.pseudo, subject, html, text)
     except Exception as e:
         print(f"Échec de l'envoi du mail « {subject} » à {user.email} : {e}", flush=True)
 
 
 def notify_new_registration(new_user):
     admins = get_user_model().objects.filter(is_active=True, is_admin=True).exclude(pk=new_user.pk)
-    name = new_user.full_name
+    name = new_user.pseudo
     link = f"{settings.FRONTEND_URL}/utilisateurs"
     subject = f"Nouvelle inscription : {name}"
 
     # Informative: the account is already active
     for admin in admins:
         html = mail.document(subject, "".join([
-            mail.title(f"Bonjour {escape(admin.first_name)},"),
+            mail.title(f"Bonjour {escape(admin.pseudo)},"),
             mail.paragraphs(
                 f"<b>{escape(name)}</b> ({escape(new_user.email)}) vient de créer un compte sur Delay Lama. "
                 "Son compte est actif.",
@@ -36,7 +36,7 @@ def notify_new_registration(new_user):
             mail.fallback_link(link),
         ]))
         text = (
-            f"Bonjour {admin.first_name},\n\n"
+            f"Bonjour {admin.pseudo},\n\n"
             f"{name} ({new_user.email}) vient de créer un compte sur Delay Lama. Son compte est actif.\n"
             f"Vous pouvez le désactiver si besoin : {link}\n"
         )
@@ -47,13 +47,13 @@ def notify_account_activated(user):
     link = f"{settings.FRONTEND_URL}/login"
     subject = "Votre compte Delay Lama est activé"
     html = mail.document(subject, "".join([
-        mail.title(f"Bonjour {escape(user.first_name)},"),
+        mail.title(f"Bonjour {escape(user.pseudo)},"),
         mail.paragraphs("Bonne nouvelle : un administrateur a activé votre compte. Vous avez désormais accès à Delay Lama."),
         mail.button(link, "Se connecter"),
         mail.note(f"Votre identifiant de connexion est votre adresse e-mail : {escape(user.email)}"),
     ]))
     text = (
-        f"Bonjour {user.first_name},\n\n"
+        f"Bonjour {user.pseudo},\n\n"
         "Bonne nouvelle : un administrateur a activé votre compte. Vous avez désormais accès à Delay Lama.\n\n"
         f"Se connecter : {link}\n\nVotre identifiant de connexion est votre adresse e-mail : {user.email}"
     )
@@ -70,7 +70,7 @@ def send_invitation(user, link):
     role_text = " en tant qu'administrateur" if user.is_admin else ""
     subject = "Votre compte Delay Lama a été créé"
     html = mail.document(subject, "".join([
-        mail.title(f"Bonjour {escape(user.first_name)},"),
+        mail.title(f"Bonjour {escape(user.pseudo)},"),
         mail.paragraphs(
             f"Un compte Delay Lama vient de vous être créé{role}.",
             "Pour y accéder, choisissez votre mot de passe en cliquant sur le bouton ci-dessous. "
@@ -81,18 +81,18 @@ def send_invitation(user, link):
         mail.note(f"Ce lien est valable 3 jours. Votre identifiant de connexion est votre adresse e-mail : {escape(user.email)}"),
     ]))
     text = (
-        f"Bonjour {user.first_name},\n\n"
+        f"Bonjour {user.pseudo},\n\n"
         f"Un compte Delay Lama vient de vous être créé{role_text}.\n"
         "Pour y accéder, choisissez votre mot de passe avec le lien suivant. Vous serez ensuite directement connecté.\n\n"
         f"{link}\n\nCe lien est valable 3 jours. Votre identifiant de connexion est votre adresse e-mail : {user.email}"
     )
-    mail.send_email(user.email, user.full_name, subject, html, text)
+    mail.send_email(user.email, user.pseudo, subject, html, text)
 
 
 def send_password_reset(user, link):
     subject = "Réinitialisation de votre mot de passe"
     html = mail.document(subject, "".join([
-        mail.title(f"Bonjour {escape(user.first_name)},"),
+        mail.title(f"Bonjour {escape(user.pseudo)},"),
         mail.paragraphs(
             "Vous avez demandé à réinitialiser votre mot de passe. "
             "Cliquez sur le bouton ci-dessous pour en choisir un nouveau&nbsp;:"
@@ -103,7 +103,7 @@ def send_password_reset(user, link):
                   "votre mot de passe reste inchangé."),
     ]))
     text = (
-        f"Bonjour {user.first_name},\n\n"
+        f"Bonjour {user.pseudo},\n\n"
         "Vous avez demandé à réinitialiser votre mot de passe.\n"
         f"Cliquez sur le lien suivant pour en choisir un nouveau :\n\n{link}\n\n"
         "Si vous n’êtes pas à l’origine de cette demande, ignorez cet e-mail."

@@ -13,4 +13,4 @@ class BoardSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
     def get_owner_name(self, board):
-        return board.owner.full_name or board.owner.email
+        return board.owner.pseudo

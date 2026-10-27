@@ -9,11 +9,9 @@
             <input id="email" :value="auth.user?.email" type="email" disabled />
             <p v-if="auth.isAdmin" class="role"><Icon name="shield" :size="16" /> Administrateur</p>
 
-            <label for="first_name">Prénom</label>
-            <input id="first_name" v-model="firstName" placeholder="Prénom" autocomplete="given-name" required />
-
-            <label for="last_name">Nom</label>
-            <input id="last_name" v-model="lastName" placeholder="Nom" autocomplete="family-name" required />
+            <label for="pseudo">Pseudo</label>
+            <input id="pseudo" v-model="pseudo" placeholder="Pseudo" autocomplete="nickname" maxlength="30" required />
+            <p class="field-hint">Affiché aux autres joueurs. 2 à 30 caractères : lettres, chiffres, espaces et . _ -</p>
 
             <p v-if="auth.error" class="form-error">{{ auth.error }}</p>
             <p v-if="saved" class="form-success">Vos informations ont été enregistrées.</p>
@@ -36,28 +34,25 @@ import Icon from "@/components/Icon.vue"
 import { useAuthStore } from "@/stores/auth"
 
 const auth = useAuthStore()
-const firstName = ref("")
-const lastName = ref("")
+const pseudo = ref("")
 const saved = ref(false)
 
 auth.error = null
 
 // The form shows the saved values (on load and after each save)
 watch(() => auth.user, (user) => {
-    firstName.value = user?.first_name || ""
-    lastName.value = user?.last_name || ""
+    pseudo.value = user?.pseudo || ""
 }, { immediate: true })
 
 const changed = computed(() =>
-    firstName.value.trim() !== (auth.user?.first_name || "") ||
-    lastName.value.trim().toUpperCase() !== (auth.user?.last_name || ""),
+    pseudo.value.trim() !== (auth.user?.pseudo || ""),
 )
 
-watch([firstName, lastName], () => (saved.value = false))
+watch(pseudo, () => (saved.value = false))
 
 async function submit() {
     try {
-        await auth.updateProfile(firstName.value.trim(), lastName.value.trim())
+        await auth.updateProfile(pseudo.value.trim())
         saved.value = true
     } catch {
         // The error is shown from the store

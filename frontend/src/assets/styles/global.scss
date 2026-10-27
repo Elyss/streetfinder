@@ -192,6 +192,12 @@ a{
         }
     }
 
+    .field-hint{
+        margin: 0;
+        font-size: 0.8em;
+        color: var(--muted);
+    }
+
     .btn{
         margin-top: 1.2rem;
         width: 100%;

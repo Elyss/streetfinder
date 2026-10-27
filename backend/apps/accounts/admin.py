@@ -10,7 +10,7 @@ from .models import User
 class UserCreationForm(BaseUserCreationForm):
     class Meta(BaseUserCreationForm.Meta):
         model = User
-        fields = ["email", "first_name", "last_name"]
+        fields = ["email", "pseudo"]
 
 
 class UserChangeForm(BaseUserChangeForm):
@@ -23,17 +23,19 @@ class UserChangeForm(BaseUserChangeForm):
 class UserAdmin(BaseUserAdmin):
     form = UserChangeForm
     add_form = UserCreationForm
-    ordering = ["last_name", "first_name"]
-    list_display = ["email", "first_name", "last_name", "is_admin", "is_activated_by_admin", "is_active"]
+    ordering = ["pseudo"]
+    list_display = ["pseudo", "email", "is_admin", "is_activated_by_admin", "is_active"]
     list_filter = ["is_admin", "is_activated_by_admin", "is_active", "is_staff"]
-    search_fields = ["email", "first_name", "last_name"]
+    search_fields = ["pseudo", "email"]
     fieldsets = [
         (None, {"fields": ["email", "password"]}),
-        ("Identité", {"fields": ["first_name", "last_name"]}),
+        ("Identité", {"fields": ["pseudo"]}),
+        # No longer asked nor shown in the app, kept for the accounts created before the pseudo
+        ("Archives", {"classes": ["collapse"], "fields": ["first_name", "last_name"]}),
         ("Delay Lama", {"fields": ["is_admin", "is_activated_by_admin"]}),
         ("Django", {"fields": ["is_active", "is_staff", "is_superuser", "groups", "user_permissions"]}),
         ("Dates", {"fields": ["last_login", "date_joined"]}),
     ]
     add_fieldsets = [
-        (None, {"classes": ["wide"], "fields": ["email", "first_name", "last_name", "password1", "password2"]}),
+        (None, {"classes": ["wide"], "fields": ["email", "pseudo", "password1", "password2"]}),
     ]

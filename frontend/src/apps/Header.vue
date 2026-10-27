@@ -18,7 +18,7 @@
                     <template v-if="auth.isLoggedIn">
                         <router-link :to="{ name: 'profile' }" class="user" :title="`Mon profil (${auth.user?.email || ''})`">
                             <Icon name="user" :size="18" />
-                            <span>{{ auth.fullName }}</span>
+                            <span>{{ auth.pseudo }}</span>
                         </router-link>
                         <button type="button" class="logout" title="Se déconnecter" aria-label="Se déconnecter" @click="logout">
                             <Icon name="logout" :size="18" />

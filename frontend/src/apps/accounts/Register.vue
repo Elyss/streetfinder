@@ -6,11 +6,9 @@
         <p>Créez votre compte pour accéder aux move lists, au training et aux boards.</p>
 
         <form @submit.prevent="submit">
-            <label for="first_name">Prénom</label>
-            <input id="first_name" v-model="form.first_name" placeholder="Prénom" autocomplete="given-name" required />
-
-            <label for="last_name">Nom</label>
-            <input id="last_name" v-model="form.last_name" placeholder="Nom" autocomplete="family-name" required />
+            <label for="pseudo">Pseudo</label>
+            <input id="pseudo" v-model="form.pseudo" placeholder="Pseudo" autocomplete="nickname" maxlength="30" required />
+            <p class="field-hint">Affiché aux autres joueurs. 2 à 30 caractères : lettres, chiffres, espaces et . _ -</p>
 
             <label for="email">Email</label>
             <input id="email" v-model="form.email" type="email" placeholder="Email" autocomplete="email" required />
@@ -45,7 +43,7 @@ const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
-const form = ref({ first_name: "", last_name: "", email: "", password: "" })
+const form = ref({ pseudo: "", email: "", password: "" })
 const confirmPassword = ref("")
 const localError = ref("")
 const error = computed(() => localError.value || auth.error)

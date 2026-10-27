@@ -45,7 +45,7 @@
 
         <template v-else>
             <p>
-                Bonjour <b>{{ firstName }}</b>,
+                Bonjour <b>{{ pseudo }}</b>,
                 {{ invitation ? "choisissez votre mot de passe pour accéder à votre compte." : "choisissez votre nouveau mot de passe." }}
             </p>
             <form @submit.prevent="savePassword">
@@ -88,7 +88,7 @@ const email = ref("")
 const sent = ref(false)
 const checking = ref(false)
 const linkValid = ref(false)
-const firstName = ref("")
+const pseudo = ref("")
 const password = ref("")
 const confirmPassword = ref("")
 const loading = ref(false)
@@ -113,7 +113,7 @@ async function checkLink() {
     checking.value = true
     try {
         const { data } = await api.get("/api/auth/password/link/", { params: { uid: props.uid, token: props.token } })
-        firstName.value = data.first_name
+        pseudo.value = data.pseudo
         linkValid.value = true
     } catch {
         linkValid.value = false

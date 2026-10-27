@@ -21,8 +21,7 @@ export const useAuthStore = defineStore("auth", {
       const refresh = localStorage.getItem("refresh")
       return !!refresh && !isTokenExpired(refresh)
     },
-    fullName: (state) => (state.user ? `${state.user.first_name} ${state.user.last_name}`.trim() : ""),
-    firstName: (state) => state.user?.first_name || "",
+    pseudo: (state) => state.user?.pseudo || "",
     id: (state) => state.user?.id || null,
     isAdmin: (state) => !!state.user?.is_admin,
     // Same rule as the backend (permissions.is_activated)
@@ -71,11 +70,11 @@ export const useAuthStore = defineStore("auth", {
       this.user = data
     },
 
-    async updateProfile(first_name, last_name) {
+    async updateProfile(pseudo) {
       this.loading = true
       this.error = null
       try {
-        const { data } = await api.post("/api/auth/profile/", { first_name, last_name })
+        const { data } = await api.post("/api/auth/profile/", { pseudo })
         this.user = data
       } catch (e) {
         this.error = errorMessage(e, "Enregistrement impossible")

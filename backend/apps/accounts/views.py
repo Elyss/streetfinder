@@ -15,6 +15,7 @@ from rest_framework.throttling                  import AnonRateThrottle
 from rest_framework_simplejwt.tokens            import RefreshToken
 
 from .notifications import notify_account_activated, notify_new_registration, send_invitation, send_password_reset
+from .models        import pseudo_error
 from .permissions   import IsActivated, IsAdmin
 
 User = get_user_model()
@@ -24,8 +25,7 @@ def user_payload(u):
     return {
         "id": u.id,
         "email": u.email,
-        "first_name": u.first_name,
-        "last_name": u.last_name,
+        "pseudo": u.pseudo,
         "is_admin": u.is_admin,
         "is_activated_by_admin": u.is_activated_by_admin,
         "date_joined": u.date_joined,
@@ -87,11 +87,12 @@ def me(request):
 def register(request):
     email = (request.data.get("email") or "").strip().lower()
     password = request.data.get("password") or ""
-    first_name = (request.data.get("first_name") or "").strip()
-    last_name = (request.data.get("last_name") or "").strip().upper()
+    pseudo = (request.data.get("pseudo") or "").strip()
 
-    if not email or not password or not first_name or not last_name:
+    if not email or not password or not pseudo:
         return Response({"error": "Tous les champs sont requis."}, status=400)
+    if error := pseudo_error(pseudo):
+        return Response({"error": error}, status=400)
     try:
         validate_email(email)
     except ValidationError:
@@ -99,11 +100,11 @@ def register(request):
     if User.objects.filter(email=email).exists():
         return Response({"error": "Un utilisateur avec cet e-mail existe déjà."}, status=400)
 
-    errors = password_errors(password, User(email=email, first_name=first_name, last_name=last_name))
+    errors = password_errors(password, User(email=email, pseudo=pseudo))
     if errors:
         return Response({"error": " ".join(errors)}, status=400)
 
-    user = User.objects.create_user(email=email, first_name=first_name, last_name=last_name, password=password)
+    user = User.objects.create_user(email=email, pseudo=pseudo, password=password)
 
     # Admins are told about the new account (active right away)
     notify_new_registration(user)
@@ -115,15 +116,15 @@ def register(request):
 @api_view(["POST"])
 @permission_classes([IsActivated])
 def update_profile(request):
-    first_name = (request.data.get("first_name") or "").strip()
-    last_name = (request.data.get("last_name") or "").strip().upper()
-    if not first_name or not last_name:
-        return Response({"error": "Le nom et le prénom sont requis."}, status=400)
-
+    pseudo = (request.data.get("pseudo") or "").strip()
     user = request.user
-    user.first_name = first_name
-    user.last_name = last_name
-    user.save(update_fields=["first_name", "last_name"])
+    if not pseudo:
+        return Response({"error": "Le pseudo est requis."}, status=400)
+    if error := pseudo_error(pseudo, user):
+        return Response({"error": error}, status=400)
+
+    user.pseudo = pseudo
+    user.save(update_fields=["pseudo"])
     return Response(user_payload(user))
 
 
@@ -147,7 +148,7 @@ def check_link(request):
     user = user_from_link(request.query_params.get("uid"), request.query_params.get("token"))
     if user is None:
         return Response({"error": "Lien invalide ou expiré."}, status=400)
-    return Response({"first_name": user.first_name})
+    return Response({"pseudo": user.pseudo})
 
 
 @api_view(["POST"])
@@ -179,12 +180,13 @@ def users(request):
 
     # An admin creates an already activated account; the person receives a link to choose a password
     email = (request.data.get("email") or "").strip().lower()
-    first_name = (request.data.get("first_name") or "").strip()
-    last_name = (request.data.get("last_name") or "").strip().upper()
+    pseudo = (request.data.get("pseudo") or "").strip()
     is_admin = request.data.get("is_admin") in (True, "true", "1", 1)
 
-    if not email or not first_name or not last_name:
+    if not email or not pseudo:
         return Response({"error": "Tous les champs sont requis."}, status=400)
+    if error := pseudo_error(pseudo):
+        return Response({"error": error}, status=400)
     try:
         validate_email(email)
     except ValidationError:
@@ -197,8 +199,7 @@ def users(request):
         with transaction.atomic():
             user = User.objects.create_user(
                 email=email,
-                first_name=first_name,
-                last_name=last_name,
+                pseudo=pseudo,
                 password=None,  # unusable until the person chooses one
                 is_admin=is_admin,
                 is_activated_by_admin=True,

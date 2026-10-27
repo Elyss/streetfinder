@@ -31,7 +31,7 @@ def share_payload(board):
         "members": [
             {
                 "id": m.user_id,
-                "name": m.user.full_name or m.user.email,
+                "name": m.user.pseudo,
                 "email": m.user.email,
                 "role": m.role,
             }
