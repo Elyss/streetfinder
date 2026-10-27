@@ -8,6 +8,12 @@
                 <router-link to="/">
                     Accueil
                 </router-link>
+                <router-link :to="{ name: 'characters' }">
+                    Personnages
+                </router-link>
+                <router-link :to="{ name: 'input-breaker' }">
+                    Input breaker
+                </router-link>
             </div>
         </header>
 </template>
