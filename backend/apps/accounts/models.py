@@ -31,8 +31,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     # Manages the users of the platform.
     # Not to be confused with is_superuser, which gives every right in the Django admin.
     is_admin = models.BooleanField(default=False)
-    # Self-registered accounts wait for an admin before accessing anything
-    is_activated_by_admin = models.BooleanField(default=False)
+    # New accounts (self-registered or invited) are active right away;
+    # an admin can deactivate one, which then loses access to everything
+    is_activated_by_admin = models.BooleanField(default=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

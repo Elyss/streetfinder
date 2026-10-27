@@ -72,6 +72,17 @@ function starPath(w, h) {
   return d + "Z"
 }
 
+// Comic "burst": many short spikes around an ellipse
+function burstPath(w, h, spikes = 12) {
+  let d = ""
+  for (let i = 0; i < spikes * 2; i++) {
+    const a = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2
+    const k = i % 2 ? 0.74 : 1
+    d += `${i ? "L" : "M"}${w / 2 + Math.cos(a) * (w / 2) * k} ${h / 2 + Math.sin(a) * (h / 2) * k}`
+  }
+  return d + "Z"
+}
+
 /** Outline (`d`) and optional stroke-only decoration (`decor`) of a shape of size w x h. */
 export function shapePath(kind, w, h) {
   switch (kind) {
@@ -108,6 +119,8 @@ export function shapePath(kind, w, h) {
       return { d: cloudPath(w, h) }
     case "star":
       return { d: starPath(w, h) }
+    case "burst":
+      return { d: burstPath(w, h) }
     case "subprocess": {
       const e = Math.min(12, w * 0.1)
       return { d: `M0 0H${w}V${h}H0Z`, decor: `M${e} 0V${h}M${w - e} 0V${h}` }
@@ -130,6 +143,7 @@ export function textInset(item) {
     case "ellipse": return { l: w * 0.12, t: h * 0.1, r: w * 0.12, b: h * 0.1 }
     case "triangle": return { l: w * 0.25, t: h * 0.4, r: w * 0.25, b: p }
     case "star": return { l: w * 0.28, t: h * 0.32, r: w * 0.28, b: h * 0.22 }
+    case "burst": return { l: w * 0.22, t: h * 0.22, r: w * 0.22, b: h * 0.22 }
     case "cloud": return { l: w * 0.18, t: h * 0.18, r: w * 0.18, b: h * 0.18 }
     case "parallelogram": return { l: Math.min(w * 0.2, h * 0.6), t: p, r: Math.min(w * 0.2, h * 0.6), b: p }
     case "hexagon": return { l: Math.min(w * 0.2, h * 0.4), t: p, r: Math.min(w * 0.2, h * 0.4), b: p }
@@ -296,6 +310,9 @@ function bezierPoint(p1, c1, c2, p2, t) {
 
 export const capSize = (sw) => 6 + sw * 2.5
 
+// Space between the ends of a connector and the objects it is attached to
+const END_GAP = 8
+
 const CAP_INSET = { arrow: 0.85, diamond: 1.2, circle: 1 }
 
 function shorten(pts, fromStart, amount) {
@@ -332,6 +349,16 @@ export function connectorGeometry(conn, items, obstacles = []) {
   }
   const d1 = sa ? SIDES[sa] : freeDir(p1, p2)
   const d2 = sb ? SIDES[sb] : freeDir(p2, p1)
+
+  // Arrows stop a little before the objects they connect
+  if (route === "straight") {
+    const u = norm(p1, p2)
+    if (a.rect) p1 = add(p1, u, END_GAP)
+    if (b.rect) p2 = add(p2, u, -END_GAP)
+  } else {
+    if (a.rect) p1 = add(p1, d1, END_GAP)
+    if (b.rect) p2 = add(p2, d2, END_GAP)
+  }
 
   const sw = style.strokeWidth || 2
   const insetStart = (CAP_INSET[style.startCap] || 0) * capSize(sw)

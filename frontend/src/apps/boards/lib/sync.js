@@ -9,13 +9,17 @@ import { freshAccessToken } from "@/api/axios"
 const FLUSH_DELAY = 40
 const CHUNK = 200
 
-// Browsers cannot set headers on a WebSocket: the access token goes in the query string
-export function socketUrl(boardId, token) {
+// Browsers cannot set headers on a WebSocket: the tokens go in the query string
+// (token: account, share: share link used without an account)
+export function socketUrl(boardId, { token, share }) {
   const base = import.meta.env.VITE_API_URL || window.location.origin
-  return base.replace(/^http/, "ws").replace(/\/$/, "") + `/ws/boards/${boardId}/?token=${encodeURIComponent(token)}`
+  const query = new URLSearchParams()
+  if (token) query.set("token", token)
+  if (share) query.set("share", share)
+  return base.replace(/^http/, "ws").replace(/\/$/, "") + `/ws/boards/${boardId}/?${query}`
 }
 
-export function createSync(boardId, { getItem, onInit, onOps, onMessage, onStatus }) {
+export function createSync(boardId, { getItem, onInit, onOps, onMessage, onStatus }, { share = null } = {}) {
   const storageKey = `boards.pending.${boardId}`
   let ws = null
   let ready = false
@@ -70,17 +74,20 @@ export function createSync(boardId, { getItem, onInit, onOps, onMessage, onStatu
   }
 
   async function connect() {
-    let token
+    let token = null
     try {
       token = await freshAccessToken()
     } catch {
-      // Offline, or session expired: changes stay queued until a token can be obtained
-      status()
-      retryLater()
-      return
+      // Offline, or session expired: changes stay queued until a token can be obtained.
+      // With a share link, the board is reachable without an account.
+      if (!share) {
+        status()
+        retryLater()
+        return
+      }
     }
     if (closed) return
-    ws = new WebSocket(socketUrl(boardId, token))
+    ws = new WebSocket(socketUrl(boardId, { token, share }))
     ws.onmessage = (event) => {
       const msg = JSON.parse(event.data)
       if (msg.type === "init") {

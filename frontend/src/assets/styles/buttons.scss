@@ -1,45 +1,47 @@
 @use "sass:map";
 
+// Colors come from the theme variables (global.scss), so buttons follow the
+// dark site theme and the light theme kept by the board editor.
 $btn-colors: (
   primary: (
-    base: #5366ce,
-    hover: #4354b9,
-    soft: #ecf1ff,
-    text: #fff,
-    soft-text: #4554b2,
-    outline: #d4ddf9,
+    base: var(--accent),
+    hover: var(--accent-hover),
+    soft: var(--accent-soft),
+    text: var(--on-accent),
+    soft-text: var(--accent),
+    outline: var(--accent),
   ),
   secondary: (
-    base: #f4f5f8,
-    hover: #e6e8eb,
-    soft: #f9fafd,
-    text: #2e333d,
-    soft-text: #5c626c,
-    outline: #dbdee3,
+    base: var(--surface-2),
+    hover: var(--border-strong),
+    soft: var(--surface),
+    text: var(--text),
+    soft-text: var(--muted),
+    outline: var(--border-strong),
   ),
   success: (
-    base: #2FA46A,
-    hover: #27905C,
-    soft: #E3F5EB,
-    text: #fff,
-    soft-text: #27905C,
-    outline: #2FA46A,
+    base: var(--success),
+    hover: var(--success),
+    soft: var(--success-soft),
+    text: var(--on-accent),
+    soft-text: var(--success),
+    outline: var(--success),
   ),
   warning: (
-    base: #E0922B,
-    hover: #CC8013,
-    soft: #FBEFD9,
-    text: #fff,
-    soft-text: #CC8013,
-    outline: #E0922B,
+    base: var(--yellow),
+    hover: var(--yellow),
+    soft: var(--warning-soft),
+    text: var(--on-accent),
+    soft-text: var(--yellow),
+    outline: var(--yellow),
   ),
   danger: (
-    base: #DA3838,
-    hover: #C62525,
-    soft: #FBE6E4,
+    base: var(--danger),
+    hover: var(--danger),
+    soft: var(--danger-soft),
     text: #fff,
-    soft-text: #C62525,
-    outline: #DA3838,
+    soft-text: var(--danger),
+    outline: var(--danger),
   ),
 );
 
@@ -49,11 +51,13 @@ $btn-colors: (
   justify-content: center;
   gap: 0.5rem;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--radius-btn);
   padding: 0.65rem 1.4rem;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-condensed);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: var(--btn-case);
+  letter-spacing: var(--btn-spacing);
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;

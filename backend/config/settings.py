@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.characters",
     "apps.boards",
+    "apps.combos",
 ]
 
 MIDDLEWARE = [

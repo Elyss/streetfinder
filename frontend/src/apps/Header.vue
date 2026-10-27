@@ -5,42 +5,30 @@
                     <img src="/logo-header.webp" alt="Delay Lama">
                 </router-link>
 
-                <!-- The apps are reserved to activated accounts -->
-                <nav v-if="auth.isLoggedIn && auth.isActivated" class="nav">
-                    <router-link to="/">
-                        Accueil
-                    </router-link>
-                    <router-link :to="{ name: 'characters' }">
-                        Personnages
-                    </router-link>
-                    <router-link :to="{ name: 'input-breaker' }">
-                        Input breaker
-                    </router-link>
-                    <router-link :to="{ name: 'boards' }">
-                        Boards
-                    </router-link>
-                    <router-link v-if="auth.isAdmin" :to="{ name: 'users' }">
-                        Utilisateurs
-                    </router-link>
+                <!-- Logged out, the links lead to the login page -->
+                <nav v-if="!auth.isLoggedIn || auth.isActivated" class="nav">
+                    <router-link :to="{ name: 'characters' }">Move lists</router-link>
+                    <router-link :to="{ name: 'input-breaker' }">Training</router-link>
+                    <router-link :to="{ name: 'boards' }">Boards</router-link>
+                    <router-link v-if="auth.isAdmin" :to="{ name: 'users' }">Utilisateurs</router-link>
                 </nav>
+                <span v-else class="nav"></span>
 
-                <template v-if="auth.isLoggedIn">
-                    <router-link :to="{ name: 'profile' }" class="user" :title="`Mon profil (${auth.user?.email || ''})`">
-                        <Icon name="user" :size="18" />
-                        <span>{{ auth.fullName }}</span>
-                    </router-link>
-                    <button type="button" class="logout" title="Se déconnecter" aria-label="Se déconnecter" @click="logout">
-                        <Icon name="logout" :size="18" />
-                    </button>
-                </template>
-                <template v-else>
-                    <router-link :to="{ name: 'login' }">
-                        Se connecter
-                    </router-link>
-                    <router-link :to="{ name: 'register' }" class="btn btn-primary register">
-                        S'inscrire
-                    </router-link>
-                </template>
+                <div class="account">
+                    <template v-if="auth.isLoggedIn">
+                        <router-link :to="{ name: 'profile' }" class="user" :title="`Mon profil (${auth.user?.email || ''})`">
+                            <Icon name="user" :size="18" />
+                            <span>{{ auth.fullName }}</span>
+                        </router-link>
+                        <button type="button" class="logout" title="Se déconnecter" aria-label="Se déconnecter" @click="logout">
+                            <Icon name="logout" :size="18" />
+                        </button>
+                    </template>
+                    <template v-else>
+                        <router-link :to="{ name: 'login' }" class="login">Se connecter</router-link>
+                        <router-link :to="{ name: 'register' }" class="register"><span>S'inscrire</span></router-link>
+                    </template>
+                </div>
             </div>
         </header>
 </template>
@@ -63,53 +51,118 @@ function logout() {
 
 .main_header{
     width: 100%;
-    background-color: white;
-    border-bottom: 1px solid #e5e9f0;
+    background-color: var(--bg);
+    border-bottom: 1px solid var(--border);
 }
 
 .header_content{
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 0.6rem 1rem;
+    padding: 0.7rem 1.5rem;
     max-width: 1200px;
     margin: auto;
-    gap: 1rem;
+    gap: 1.5rem;
+}
 
-    .brand{
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-right: auto;
-        font-size: 1.2em;
-        font-weight: 700;
-        color: oklch(0.27 0.02 265);
+.brand{
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: 1.7rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    color: var(--text);
+    white-space: nowrap;
 
-        &:hover{
-            text-decoration: none;
-        }
+    &:hover{
+        color: var(--text);
+        text-decoration: none;
     }
 
     img{
         display: block;
-        height: 56px;
+        height: 68px;
         width: auto;
-        margin-block: -8px;
+        margin-block: -12px;
     }
 }
 
 .nav{
     display: flex;
     align-items: center;
-    gap: 1rem;
+    justify-content: center;
+    gap: 2rem;
+
+    a{
+        font-family: var(--font-condensed);
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+
+        &:hover,
+        &.router-link-active{
+            color: var(--text);
+            text-decoration: none;
+        }
+    }
+}
+
+.account{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.25rem;
+    flex: 1;
+}
+
+.login{
+    font-weight: 600;
+    white-space: nowrap;
+
+    &:hover{
+        text-decoration: none;
+    }
+}
+
+// Slanted arcade button
+.register{
+    display: inline-block;
+    padding: 0.55rem 1.4rem;
+    background: var(--accent);
+    transform: skewX(-12deg);
+    transition: background-color 0.15s;
+
+    span{
+        display: inline-block;
+        transform: skewX(12deg);
+        font-family: var(--font-condensed);
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--on-accent);
+    }
+
+    &:hover{
+        background: var(--accent-hover);
+        text-decoration: none;
+    }
 }
 
 .user{
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    padding-left: 1rem;
-    border-left: 1px solid #e5e9f0;
+    gap: 0.4rem;
+    white-space: nowrap;
+
+    &:hover{
+        text-decoration: none;
+    }
 }
 
 .logout{
@@ -117,31 +170,31 @@ function logout() {
     place-items: center;
     padding: 0.35rem;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--radius);
     background: none;
-    color: #5c626c;
+    color: var(--muted);
     cursor: pointer;
 
     &:hover{
-        background: #f1f3f6;
-        color: #C62525;
+        background: var(--surface-2);
+        color: var(--danger);
     }
 }
 
-.register{
-    padding: 0.5rem 0.9rem;
-
-    &:hover{
-        color: #fff;
-    }
-}
-
-@media (max-width: 760px){
+@media (max-width: 860px){
     .nav{
         display: none;
     }
+}
 
-    .user span{
+@media (max-width: 520px){
+    .brand img{
+        height: 52px;
+        margin-block: -6px;
+    }
+
+    .user span,
+    .login{
         display: none;
     }
 }

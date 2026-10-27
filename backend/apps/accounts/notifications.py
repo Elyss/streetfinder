@@ -21,23 +21,24 @@ def notify_new_registration(new_user):
     admins = get_user_model().objects.filter(is_active=True, is_admin=True).exclude(pk=new_user.pk)
     name = new_user.full_name
     link = f"{settings.FRONTEND_URL}/utilisateurs"
-    subject = f"Nouvelle inscription à valider : {name}"
+    subject = f"Nouvelle inscription : {name}"
 
+    # Informative: the account is already active
     for admin in admins:
         html = mail.document(subject, "".join([
             mail.title(f"Bonjour {escape(admin.first_name)},"),
             mail.paragraphs(
-                f"<b>{escape(name)}</b> ({escape(new_user.email)}) vient de créer un compte sur Delay Lama.",
-                "Pour lui donner accès à l'application, activez son compte depuis la gestion des utilisateurs&nbsp;:",
+                f"<b>{escape(name)}</b> ({escape(new_user.email)}) vient de créer un compte sur Delay Lama. "
+                "Son compte est actif.",
+                "Vous pouvez le désactiver si besoin depuis la gestion des utilisateurs&nbsp;:",
             ),
             mail.button(link, "Gérer les utilisateurs"),
             mail.fallback_link(link),
-            mail.note("Tant que son compte n'est pas activé, cette personne n'a accès à aucune fonctionnalité."),
         ]))
         text = (
             f"Bonjour {admin.first_name},\n\n"
-            f"{name} ({new_user.email}) vient de créer un compte sur Delay Lama.\n"
-            f"Pour lui donner accès à l'application, activez son compte : {link}\n"
+            f"{name} ({new_user.email}) vient de créer un compte sur Delay Lama. Son compte est actif.\n"
+            f"Vous pouvez le désactiver si besoin : {link}\n"
         )
         _send(admin, subject, html, text)
 

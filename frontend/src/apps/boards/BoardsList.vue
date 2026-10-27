@@ -227,9 +227,9 @@ h2 {
   gap: 0.5rem;
   margin-top: 1.5rem;
   padding: 1rem;
-  background: white;
-  border: 1px solid #e5e9f0;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
 
   label {
     font-weight: 600;
@@ -240,7 +240,7 @@ h2 {
     font-family: ui-monospace, Consolas, monospace;
     font-size: 0.8em;
     padding: 0.6rem;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     resize: vertical;
     word-break: break-all;
@@ -256,15 +256,15 @@ h2 {
   margin: 1rem 0 0;
   padding: 0.6rem 0.8rem;
   border-radius: 8px;
-  background: #E3F5EB;
-  color: #27905C;
+  background: var(--success-soft);
+  color: var(--success);
   font-size: 0.9em;
 }
 
 .hint,
 .empty {
   margin: 0;
-  color: #5c626c;
+  color: var(--muted);
   font-size: 0.92em;
 }
 
@@ -273,7 +273,7 @@ h2 {
 }
 
 .error {
-  color: #c62525;
+  color: var(--danger);
 }
 
 .open-link {
@@ -287,7 +287,7 @@ h2 {
     min-width: 0;
     font: inherit;
     padding: 0.55rem 0.8rem;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
   }
 }
@@ -303,17 +303,17 @@ h2 {
 .card {
   display: flex;
   flex-direction: column;
-  background: white;
-  border: 1px solid #e5e9f0;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
 .preview {
   position: relative;
   height: 120px;
-  background-color: #fbfcfe;
-  background-image: radial-gradient(#c3cad6 1px, transparent 1px);
+  background-color: var(--surface-2);
+  background-image: radial-gradient(var(--border-strong) 1px, transparent 1px);
   background-size: 16px 16px;
 
   .role {
@@ -324,12 +324,12 @@ h2 {
     font-weight: 700;
     border-radius: 6px;
     padding: 2px 7px;
-    background: #E3F5EB;
-    color: #27905C;
+    background: var(--success-soft);
+    color: var(--success);
 
     &.view {
-      background: #ecf1ff;
-      color: #4554b2;
+      background: var(--accent-soft);
+      color: var(--accent);
     }
   }
 
@@ -339,8 +339,8 @@ h2 {
     bottom: 8px;
     font-size: 0.75em;
     font-weight: 600;
-    color: #5c626c;
-    background: white;
+    color: var(--muted);
+    background: var(--surface);
     border-radius: 6px;
     padding: 2px 6px;
   }
@@ -353,7 +353,7 @@ h2 {
 
   .title {
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -361,7 +361,7 @@ h2 {
 
   .date {
     font-size: 0.8em;
-    color: #8a909b;
+    color: var(--muted);
   }
 }
 
@@ -375,18 +375,18 @@ h2 {
     background: none;
     font: inherit;
     font-size: 0.8em;
-    color: #5c626c;
+    color: var(--muted);
     padding: 4px 6px;
     border-radius: 6px;
     cursor: pointer;
 
     &:hover {
-      background: #f1f3f6;
+      background: var(--surface-2);
     }
 
     &.danger:hover {
-      color: #c62525;
-      background: #fbe6e4;
+      color: var(--danger);
+      background: var(--danger-soft);
     }
   }
 }

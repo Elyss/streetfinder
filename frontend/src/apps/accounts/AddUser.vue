@@ -90,7 +90,7 @@ async function submit() {
         width: 18px;
         height: 18px;
         margin: 0;
-        accent-color: #5366ce;
+        accent-color: var(--accent);
     }
 }
 </style>

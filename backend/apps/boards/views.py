@@ -8,10 +8,13 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from apps.accounts.permissions import is_activated
+
 from . import store
-from .access import EDIT, OWNER, VIEW, can_edit, role_of, visible_boards
+from .access import EDIT, OWNER, VIEW, access_role, can_edit, role_of, share_role, visible_boards
 from .models import Board, BoardMember, new_share_token
 from .serializers import BoardSerializer
 
@@ -41,17 +44,32 @@ class BoardViewSet(viewsets.ModelViewSet):
     """
     Every board belongs to a user. The owner shares it with share links (write or
     read): opening a link makes the user a member of the board with that right.
+    Without an account, the link token (?share=) gives access to the board itself:
+    reading it, adding images, and the WebSocket (see consumers.py).
     Boards the user can't access answer 404, as if they did not exist.
     """
 
     serializer_class = BoardSerializer
+    # Reachable with a share link only (the rights are checked by board_with_role)
+    SHARED_ACTIONS = {"retrieve", "uploads", "join"}
+
+    def get_permissions(self):
+        if self.action in self.SHARED_ACTIONS:
+            return [AllowAny()]
+        return super().get_permissions()
 
     def get_queryset(self):
         return visible_boards(self.request.user).select_related("owner").annotate(item_count=Count("items", distinct=True))
 
     def board_with_role(self, minimum):
-        board = self.get_object()
-        role = role_of(board, self.request.user)
+        try:
+            pk = uuid.UUID(str(self.kwargs.get("pk")))
+        except ValueError:
+            raise NotFound()
+        board = Board.objects.select_related("owner").annotate(item_count=Count("items", distinct=True)).filter(pk=pk).first()
+        role = board and access_role(board, self.request.user, self.request.query_params.get("share"))
+        if not role:
+            raise NotFound()
         if minimum == OWNER and role != OWNER:
             raise PermissionDenied("Réservé au propriétaire du board.")
         if minimum == EDIT and not can_edit(role):
@@ -173,7 +191,11 @@ class BoardViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def join(self, request):
-        """Opening a share link: the user becomes a member with the right of the link."""
+        """
+        Opening a share link: an account becomes a member with the right of the link.
+        Without an account, only the board and the right are returned: access then
+        goes through the token, as long as the link stays enabled.
+        """
         token = (request.data.get("token") or "").strip()
         board = Board.objects.filter(edit_token=token).first() if token else None
         role = EDIT
@@ -183,6 +205,9 @@ class BoardViewSet(viewsets.ModelViewSet):
         if board is None:
             raise NotFound("Ce lien de partage est invalide ou a été désactivé.")
 
+        if not is_activated(request.user):
+            return Response({"id": board.id, "role": share_role(board, token), "member": False})
+
         current = role_of(board, request.user)
         if current is None:
             BoardMember.objects.create(board=board, user=request.user, role=role)
@@ -191,4 +216,4 @@ class BoardViewSet(viewsets.ModelViewSet):
             # A link never lowers a right already granted, but the write link raises it
             BoardMember.objects.filter(board=board, user=request.user).update(role=EDIT)
             current = EDIT
-        return Response({"id": board.id, "role": current})
+        return Response({"id": board.id, "role": current, "member": True})

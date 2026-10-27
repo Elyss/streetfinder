@@ -16,9 +16,14 @@
         <button type="button" class="wide" title="Type de forme" @click="toggle('shape')">
           {{ SHAPE_LABELS[first.shape] || "Forme" }} ▾
         </button>
-        <div v-if="open === 'shape'" class="popover list">
-          <button v-for="s in [...SHAPES, ...FLOWCHART_SHAPES.filter((f) => !SHAPES.some((x) => x.key === f.key))]" :key="s.key"
-            type="button" :class="{ active: first.shape === s.key }" @click="store.changeShape(ids, s.key); open = null">
+        <div v-if="open === 'shape'" class="popover list shapes">
+          <button v-for="s in shapeChoices" :key="s.key" type="button" :class="{ active: first.shape === s.key }"
+            @click="store.changeShape(ids, s.key); open = null">
+            <!-- Thumbnail in the colors of the selected shape -->
+            <svg class="thumb" viewBox="-2 -2 34 24" width="34" height="24" aria-hidden="true">
+              <path :d="shapePath(s.key, 30, 20).d" :fill="thumbFill" :stroke="thumbStroke" stroke-width="1.5" stroke-linejoin="round" />
+              <path v-if="shapePath(s.key, 30, 20).decor" :d="shapePath(s.key, 30, 20).decor" fill="none" :stroke="thumbStroke" stroke-width="1.5" />
+            </svg>
             {{ s.label }}
           </button>
         </div>
@@ -199,6 +204,7 @@ import {
 } from "../lib/defaults"
 import { useBoardStore } from "../store"
 import { boardsApi } from "../lib/api"
+import { shapePath } from "../lib/geometry"
 
 const props = defineProps({
   canvasSize: { type: Object, required: true },
@@ -233,6 +239,11 @@ const allShapes = computed(() => onlyType.value === "shape")
 const allLocked = computed(() => items.value.length > 0 && items.value.every((it) => it.locked))
 const grouped = computed(() => items.value.length > 1 && items.value.every((it) => it.group && it.group === items.value[0].group))
 const editing = computed(() => store.editing)
+
+const shapeChoices = [...SHAPES, ...FLOWCHART_SHAPES.filter((f) => !SHAPES.some((x) => x.key === f.key))]
+const shownColor = (color, fallback) => (!color || color === "transparent" ? fallback : color)
+const thumbFill = computed(() => shownColor(first.value.style?.fill, "#ecf1ff"))
+const thumbStroke = computed(() => shownColor(first.value.style?.stroke, "#4554b2"))
 // A single object (not a connector or a frame) can link to another board
 const linkable = computed(() => items.value.length === 1 && !["connector", "frame"].includes(first.value.type))
 const boards = ref(null)
@@ -440,6 +451,19 @@ defineExpose({ close: () => (open.value = null) })
 .popover-hint {
   margin: 4px 10px 8px;
   color: #8a909b;
+}
+
+.shapes {
+  max-height: min(420px, 60vh);
+  overflow-y: auto;
+
+  button {
+    gap: 10px !important;
+  }
+
+  .thumb {
+    flex-shrink: 0;
+  }
 }
 
 .check {

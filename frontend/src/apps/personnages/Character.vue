@@ -30,7 +30,10 @@
         <MoveList :moves="character.moves" />
       </div>
       <div v-show="activeTab === 'combo'">
-        <ComboBuilder :moves="character.moves" />
+        <CestCombo :moves="character.moves" />
+      </div>
+      <div v-show="activeTab === 'builder'">
+        <ComboBuilder :character="character" />
       </div>
     </template>
   </div>
@@ -42,12 +45,14 @@ import { computed, onMounted, ref } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import Header from "@/apps/Header.vue"
 import MoveList from "@/apps/personnages/MoveList.vue"
+import CestCombo from "@/apps/combobuilder/CestCombo.vue"
 import ComboBuilder from "@/apps/combobuilder/ComboBuilder.vue"
 import api from "@/api/axios"
 
 const TABS = [
   { key: "moves", label: "Moves", param: "" },
-  { key: "combo", label: "Combo builder", param: "combo" },
+  { key: "combo", label: "C'est combo?", param: "combo" },
+  { key: "builder", label: "Combo builder", param: "builder" },
 ]
 
 const route = useRoute()
@@ -55,7 +60,7 @@ const router = useRouter()
 
 const character = ref(null)
 const status = ref("loading")
-const activeTab = computed(() => (route.params.tab === "combo" ? "combo" : "moves"))
+const activeTab = computed(() => (["combo", "builder"].includes(route.params.tab) ? route.params.tab : "moves"))
 
 const loadCharacter = async () => {
   try {
@@ -101,7 +106,7 @@ onMounted(loadCharacter)
 
   .vitality {
     font-weight: 600;
-    color: #5c626c;
+    color: var(--muted);
   }
 }
 
@@ -109,7 +114,7 @@ onMounted(loadCharacter)
   display: flex;
   gap: 1.5rem;
   margin-block: 1.5rem;
-  border-bottom: 1px solid #e5e9f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .tab {
@@ -122,8 +127,8 @@ onMounted(loadCharacter)
   }
 
   &.active {
-    color: #4354b9;
-    border-bottom-color: #5366ce;
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 }
 </style>

@@ -19,7 +19,8 @@ import { useRouter } from "vue-router"
 import Header from "@/apps/Header.vue"
 import { boardsApi } from "./lib/api"
 
-// Share link: the user becomes a member of the board with the right of the link
+// Share link: an account becomes a member of the board with the right of the link;
+// without an account, the board opens with the link token (as long as the link is enabled)
 const props = defineProps({ token: { type: String, required: true } })
 
 const router = useRouter()
@@ -27,8 +28,8 @@ const error = ref("")
 
 onMounted(async () => {
   try {
-    const { id } = await boardsApi.join(props.token)
-    router.replace({ name: "board", params: { id } })
+    const { id, member } = await boardsApi.join(props.token)
+    router.replace({ name: "board", params: { id }, query: member ? {} : { share: props.token } })
   } catch (e) {
     error.value = e?.response?.data?.detail || "Impossible d'ouvrir ce board."
   }

@@ -1,18 +1,26 @@
 <template>
-  <div class="board-page">
+  <div class="board-page light-theme">
     <div v-if="notFound" class="not-found">
       <h1>Board introuvable</h1>
       <p>Ce lien ne correspond à aucun board (il a peut-être été supprimé).</p>
-      <router-link to="/boards" class="btn btn-primary">Mes boards</router-link>
+      <router-link :to="auth.isLoggedIn ? '/boards' : '/'" class="btn btn-primary">{{ auth.isLoggedIn ? "Mes boards" : "Accueil" }}</router-link>
     </div>
 
     <template v-else>
       <header class="topbar">
-        <router-link to="/boards" class="icon-btn" title="Mes boards" aria-label="Mes boards"><Icon name="back_arrow" :size="20" /></router-link>
+        <button v-if="auth.isLoggedIn" type="button" class="icon-btn" :class="{ active: sidebarOpen }"
+          :title="sidebarOpen ? 'Masquer la liste des boards' : 'Afficher la liste des boards'" aria-label="Liste des boards"
+          :aria-pressed="sidebarOpen" @click="toggleSidebar"><Icon name="sidebar" :size="20" /></button>
+        <router-link :to="auth.isLoggedIn ? '/boards' : '/'" class="icon-btn" :title="auth.isLoggedIn ? 'Mes boards' : 'Accueil'"
+          :aria-label="auth.isLoggedIn ? 'Mes boards' : 'Accueil'"><Icon name="back_arrow" :size="20" /></router-link>
         <input v-model="title" class="title" aria-label="Titre du board" maxlength="200" :readonly="store.readOnly"
           @keydown.enter="$event.target.blur()" @keydown.stop @blur="saveTitle" />
         <span v-if="store.role && store.role !== 'owner'" class="badge" :class="store.role"
           :title="`Board de ${ownerName}`">{{ store.readOnly ? "Lecture seule" : "Partagé" }} · {{ ownerName }}</span>
+        <!-- Opened through a share link without an account -->
+        <span v-if="!auth.isLoggedIn" class="guest">
+          Invité · <router-link :to="{ name: 'login', query: { next: route.fullPath } }">Se connecter</router-link>
+        </span>
         <span class="status" :class="store.status">{{ STATUS[store.status] }}</span>
 
         <div class="spacer"></div>
@@ -63,6 +71,8 @@
         </button>
       </header>
 
+      <div class="body">
+      <BoardSidebar v-if="sidebarOpen && auth.isLoggedIn" :current-id="store.meta.id" :current-title="store.meta.title" />
       <main class="workspace">
         <BoardCanvas ref="canvas" :highlights="search.open ? search.results : []" :active-highlight="search.results[search.index]"
           @files="addImages" @user-view-change="following = null" @open-board="openBoard" />
@@ -89,6 +99,7 @@
 
         <div v-if="toast" class="toast" role="status">{{ toast }}</div>
       </main>
+      </div>
 
       <HelpPanel v-if="help" @close="help = false" />
       <ShareDialog v-if="shareOpen" :board-id="store.meta.id" @close="shareOpen = false" />
@@ -107,6 +118,7 @@ import PropertiesBar from "./components/PropertiesBar.vue"
 import Minimap from "./components/Minimap.vue"
 import HelpPanel from "./components/HelpPanel.vue"
 import ShareDialog from "./components/ShareDialog.vue"
+import BoardSidebar from "./components/BoardSidebar.vue"
 import Icon from "@/components/Icon.vue"
 import { useBoardStore } from "./store"
 import { useAuthStore } from "@/stores/auth"
@@ -133,6 +145,26 @@ const title = ref("")
 const menu = ref(null)
 const help = ref(false)
 const shareOpen = ref(false)
+
+// Side panel listing the boards; its state is remembered by the browser
+const sidebarOpen = ref(readSidebarPref())
+
+function readSidebarPref() {
+  try {
+    return localStorage.getItem("boards.sidebar") === "1"
+  } catch {
+    return false
+  }
+}
+
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+  try {
+    localStorage.setItem("boards.sidebar", sidebarOpen.value ? "1" : "0")
+  } catch {
+    // storage unavailable: the panel just won't stay open after a reload
+  }
+}
 const ownerName = ref("")
 const toast = ref("")
 const following = ref(null)
@@ -145,6 +177,8 @@ let fitted = false
 let timers = []
 
 const boardId = computed(() => route.params.id)
+// Token of the share link, when the board is opened without an account
+const share = computed(() => route.query.share || null)
 
 // Handy for debugging and end-to-end tests
 if (import.meta.env.DEV) window.__board = store
@@ -161,10 +195,10 @@ async function load() {
   notFound.value = false
   fitted = false
   try {
-    const board = await boardsApi.get(boardId.value)
+    const board = await boardsApi.get(boardId.value, share.value)
     title.value = board.title
     ownerName.value = board.owner_name
-    store.open(board.id)
+    store.open(board.id, { share: share.value })
     store.role = board.role
     // Render the REST snapshot right away; the WebSocket "init" replaces it once connected
     store.meta.title = board.title
@@ -312,7 +346,7 @@ async function addImages(files, at) {
   const created = []
   for (const [i, file] of images.entries()) {
     try {
-      const url = await boardsApi.upload(store.meta.id, file)
+      const url = await boardsApi.upload(store.meta.id, file, share.value)
       let { w, h } = await imageSize(mediaUrl(url))
       const k = Math.min(1, 400 / Math.max(w, h))
       w = Math.round(w * k)
@@ -653,6 +687,16 @@ onBeforeUnmount(() => {
   }
 }
 
+.guest {
+  font-size: 0.8em;
+  color: var(--muted);
+  white-space: nowrap;
+
+  a {
+    color: var(--accent);
+  }
+}
+
 .status {
   font-size: 0.78em;
   color: #8a909b;
@@ -681,6 +725,11 @@ onBeforeUnmount(() => {
   &:hover {
     background: #f1f3f6;
     text-decoration: none;
+  }
+
+  &.active {
+    background: #ecf1ff;
+    color: #4554b2;
   }
 }
 
@@ -798,6 +847,13 @@ onBeforeUnmount(() => {
     color: #4554b2;
     font-weight: 600;
   }
+}
+
+.body {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 .workspace {

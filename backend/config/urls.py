@@ -15,6 +15,7 @@ urlpatterns = [
     path('', include('apps.accounts.urls')),
     path('', include('apps.characters.urls')),
     path('', include('apps.boards.urls')),
+    path('', include('apps.combos.urls')),
 ]
 
 # In prod, Caddy serves /media/ directly (static() is a no-op when DEBUG is False)

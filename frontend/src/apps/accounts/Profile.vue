@@ -72,6 +72,6 @@ async function submit() {
     gap: 0.3rem;
     margin: 0.2rem 0 0;
     font-size: 0.85em;
-    color: #4554b2;
+    color: var(--accent);
 }
 </style>

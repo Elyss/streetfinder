@@ -2,17 +2,18 @@ import api from "@/api/axios"
 
 export const boardsApi = {
   list: () => api.get("/api/boards/").then((r) => r.data),
-  get: (id) => api.get(`/api/boards/${id}/`).then((r) => r.data),
+  // share: token of a share link, for access without an account
+  get: (id, share = null) => api.get(`/api/boards/${id}/`, { params: share ? { share } : {} }).then((r) => r.data),
   create: (data = {}) => api.post("/api/boards/", data).then((r) => r.data),
   update: (id, data) => api.patch(`/api/boards/${id}/`, data).then((r) => r.data),
   remove: (id) => api.delete(`/api/boards/${id}/`),
   duplicate: (id) => api.post(`/api/boards/${id}/duplicate/`).then((r) => r.data),
   leave: (id) => api.post(`/api/boards/${id}/leave/`),
   import: (data) => api.post("/api/boards/import/", data).then((r) => r.data),
-  upload(id, file) {
+  upload(id, file, share = null) {
     const form = new FormData()
     form.append("file", file)
-    return api.post(`/api/boards/${id}/uploads/`, form).then((r) => r.data.url)
+    return api.post(`/api/boards/${id}/uploads/`, form, { params: share ? { share } : {} }).then((r) => r.data.url)
   },
 
   // Sharing (owner only)

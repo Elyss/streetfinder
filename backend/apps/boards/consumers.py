@@ -11,17 +11,17 @@ from rest_framework_simplejwt.tokens import AccessToken
 from apps.accounts.permissions import is_activated
 
 from . import store
-from .access import can_edit, role_of
+from .access import access_role, can_edit
 from .models import Board
 
 MAX_PRESENCE_BYTES = 4_000
 
 
 @database_sync_to_async
-def board_role(board_id, user):
-    """Role of the user on the board, or None (no access, or unknown board)."""
+def board_role(board_id, user, share=None):
+    """Role of the user (or of the share link) on the board, or None (no access, or unknown board)."""
     board = Board.objects.filter(id=board_id).first()
-    return role_of(board, user) if board else None
+    return access_role(board, user, share) if board else None
 
 
 @database_sync_to_async
@@ -54,13 +54,16 @@ class BoardConsumer(AsyncJsonWebsocketConsumer):
 
     Readers ("view" role) receive everything and share their presence, but their
     changes are refused (acked without being applied).
+    Access: an account (JWT ?token=) or, without one, a share link (?share=).
     """
 
     async def connect(self):
-        # Browsers cannot set headers on a WebSocket: the access token comes in the query string
-        raw = parse_qs(self.scope["query_string"].decode()).get("token", [""])[0]
-        self.user = await user_from_token(raw)
-        if self.user is None:
+        # Browsers cannot set headers on a WebSocket: the tokens come in the query string
+        query = parse_qs(self.scope["query_string"].decode())
+        raw = query.get("token", [""])[0]
+        self.share = query.get("share", [""])[0] or None
+        self.user = await user_from_token(raw) if raw else None
+        if self.user is None and not self.share:
             # Accepted then closed, so that the client receives the code and refreshes its token
             await self.accept()
             await self.close(code=4401)
@@ -70,7 +73,7 @@ class BoardConsumer(AsyncJsonWebsocketConsumer):
         except ValueError:
             await self.close()
             return
-        role = await board_role(self.board_id, self.user)
+        role = await board_role(self.board_id, self.user, self.share)
         if role is None:
             await self.close()
             return
@@ -94,7 +97,7 @@ class BoardConsumer(AsyncJsonWebsocketConsumer):
         kind = content.get("type")
 
         # Checked on every change: a member removed or demoted meanwhile cannot write anymore
-        if kind in ("ops", "meta") and not can_edit(await board_role(self.board_id, self.user)):
+        if kind in ("ops", "meta") and not can_edit(await board_role(self.board_id, self.user, self.share)):
             if kind == "ops":
                 await self.send_json({"type": "ack", "seq": content.get("seq"), "rejected": True})
             return

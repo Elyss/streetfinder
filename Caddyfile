@@ -1,6 +1,14 @@
-# Reverse proxy for prod and preprod. DOMAIN is set in the compose file.
-# Caddy obtains and renews the Let's Encrypt certificate automatically
+# Reverse proxy for prod and preprod. DOMAIN and REDIRECT_FROM are set in the compose file.
+# Caddy obtains and renews the Let's Encrypt certificates automatically
 # and redirects HTTP to HTTPS.
+
+# Other domains (www, former domain): redirected to DOMAIN, keeping the path
+# (shared board links, invitations...). 302: temporary, browsers do not cache it.
+# The default *.localhost address needs no certificate, so preprod can leave REDIRECT_FROM unset.
+{$REDIRECT_FROM:redirect.localhost} {
+	redir https://{$DOMAIN}{uri} 302
+}
+
 {$DOMAIN:localhost} {
 	# Serve static files from Django
 	handle_path /static/* {

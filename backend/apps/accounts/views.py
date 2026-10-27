@@ -105,10 +105,10 @@ def register(request):
 
     user = User.objects.create_user(email=email, first_name=first_name, last_name=last_name, password=password)
 
-    # Admins must activate this new account
+    # Admins are told about the new account (active right away)
     notify_new_registration(user)
 
-    # Logged in right away (on a "waiting for activation" page)
+    # Logged in right away
     return Response(tokens_for(user), status=status.HTTP_201_CREATED)
 
 

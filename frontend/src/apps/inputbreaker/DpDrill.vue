@@ -158,9 +158,9 @@ onUnmounted(() => {
   box-sizing: border-box;
   margin-bottom: 1.5rem;
   padding: 1.5rem;
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #e5e9f0;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   width: 100%;
 
   h2 {
@@ -171,7 +171,7 @@ onUnmounted(() => {
 
 .hint {
   margin-block: 0.75rem 0;
-  color: #5c626c;
+  color: var(--muted);
 }
 
 .verdict {
@@ -180,39 +180,39 @@ onUnmounted(() => {
   gap: 0.4rem;
   margin-top: 1.25rem;
   padding: 1.25rem 1.5rem;
-  border-radius: 12px;
-  background-color: #f4f5f8;
-  border: 2px solid #dbdee3;
+  border-radius: var(--radius);
+  background-color: var(--surface-2);
+  border: 2px solid var(--border-strong);
 
   &.ok {
-    background-color: #E3F5EB;
-    border-color: #2FA46A;
+    background-color: var(--success-soft);
+    border-color: var(--success);
   }
 
   &.ko {
-    background-color: #FBE6E4;
-    border-color: #DA3838;
+    background-color: var(--danger-soft);
+    border-color: var(--danger);
   }
 
   .label {
     font-size: 2em;
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
 
     &.waiting {
       font-size: 1.2em;
-      color: #5c626c;
+      color: var(--muted);
     }
   }
 
   .variant {
     font-weight: 600;
-    color: #27905C;
+    color: var(--success);
   }
 
   .reason {
     font-weight: 600;
-    color: #C62525;
+    color: var(--danger);
 
     &:empty {
       display: none;
@@ -230,26 +230,26 @@ onUnmounted(() => {
     min-width: 1.8em;
     padding: 0.15rem 0.4rem;
     border-radius: 6px;
-    background-color: white;
-    border: 1px solid #dbdee3;
+    background-color: var(--surface);
+    border: 1px solid var(--border-strong);
     text-align: center;
     font-weight: 700;
-    color: #8a909b;
+    color: var(--muted);
 
     &.key {
-      color: #4354b9;
-      border-color: #d4ddf9;
+      color: var(--accent);
+      border-color: var(--accent-border);
     }
 
     &.button {
-      color: oklch(0.27 0.02 265);
+      color: var(--text);
     }
   }
 
   .timing {
     font-size: 0.9em;
     font-weight: 600;
-    color: #5c626c;
+    color: var(--muted);
   }
 }
 
@@ -262,25 +262,25 @@ onUnmounted(() => {
   div {
     padding: 0.75rem 1rem;
     border-radius: 10px;
-    background-color: #f9fafd;
+    background-color: var(--surface-2);
   }
 
   dt {
     font-size: 0.8em;
     font-weight: 600;
-    color: #5c626c;
+    color: var(--muted);
   }
 
   dd {
     margin: 0.2rem 0 0;
     font-size: 1.4em;
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
 
     small {
       font-size: 0.6em;
       font-weight: 600;
-      color: #5c626c;
+      color: var(--muted);
     }
   }
 }
@@ -300,25 +300,25 @@ onUnmounted(() => {
     flex-direction: column;
     gap: 0.4rem;
     font-weight: 600;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
   }
 
   .value {
     font-weight: 700;
-    color: #4354b9;
+    color: var(--accent);
   }
 
   input[type="range"] {
-    accent-color: #5366ce;
+    accent-color: var(--accent);
   }
 
   select {
     padding: 0.5rem 0.6rem;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     font: inherit;
     color: inherit;
-    background-color: white;
+    background-color: var(--surface);
   }
 }
 

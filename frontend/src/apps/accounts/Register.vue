@@ -3,7 +3,7 @@
 
     <div class="form-card">
         <h1>Créer un compte</h1>
-        <p>Un administrateur devra activer votre compte avant que vous puissiez utiliser Delay Lama.</p>
+        <p>Créez votre compte pour accéder aux move lists, au training et aux boards.</p>
 
         <form @submit.prevent="submit">
             <label for="first_name">Prénom</label>

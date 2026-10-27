@@ -117,9 +117,9 @@ const details = (move) =>
   box-sizing: border-box;
   margin-bottom: 1.5rem;
   padding: 1.5rem;
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #e5e9f0;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   width: 100%;
 
   h2 {
@@ -143,14 +143,14 @@ td {
   padding: 0.6rem 0.75rem;
   text-align: center;
   white-space: nowrap;
-  border-bottom: 1px solid #e5e9f0;
+  border-bottom: 1px solid var(--border);
 }
 
 th {
   font-size: 0.85em;
   font-weight: 700;
-  color: #5c626c;
-  background-color: #f9fafd;
+  color: var(--muted);
+  background-color: var(--surface-2);
 }
 
 .move {
@@ -167,7 +167,7 @@ td.move {
 
   &:hover,
   &.open {
-    background-color: #f9fafd;
+    background-color: var(--surface-2);
   }
 
   &.open .chevron {
@@ -188,13 +188,13 @@ td.move {
 
   .chevron {
     display: inline-block;
-    color: #5c626c;
+    color: var(--muted);
     transition: transform 0.15s ease;
   }
 
   .name {
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
   }
 }
 
@@ -203,24 +203,24 @@ td.move {
   margin-top: 0.2rem;
   padding-left: 0.9rem;
   font-size: 0.9em;
-  color: #5c626c;
+  color: var(--muted);
 }
 
 .plus {
   font-weight: 700;
-  color: #27905C;
+  color: var(--success);
 }
 
 .minus {
   font-weight: 700;
-  color: #C62525;
+  color: var(--danger);
 }
 
 .details-row td {
   padding: 1rem 1.5rem;
   text-align: left;
   white-space: normal;
-  background-color: #f9fafd;
+  background-color: var(--surface-2);
 }
 
 dl {
@@ -232,7 +232,7 @@ dl {
 
 dt {
   font-weight: 700;
-  color: oklch(0.27 0.02 265);
+  color: var(--text);
 }
 
 dd {

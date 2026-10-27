@@ -34,6 +34,7 @@ export const SHAPES = [
   { key: "document", label: "Document" },
   { key: "cloud", label: "Nuage" },
   { key: "star", label: "Étoile" },
+  { key: "burst", label: "Explosion" },
 ]
 
 export const FLOWCHART_SHAPES = [

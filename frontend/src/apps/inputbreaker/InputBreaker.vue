@@ -43,6 +43,7 @@
       </nav>
 
       <DpDrill v-if="activeTab === 'dp'" :pad="pad" />
+      <MyCombos v-else-if="activeTab === 'combos'" :pad="pad" />
 
       <template v-else>
       <section class="main">
@@ -111,6 +112,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue"
 import { useRoute } from "vue-router"
 import Header from "@/apps/Header.vue"
 import DpDrill from "./DpDrill.vue"
+import MyCombos from "./MyCombos.vue"
 import { BUTTONS } from "./gamepad"
 import { FRAME_MS } from "./dp"
 import { useGamepad } from "./useGamepad"
@@ -120,10 +122,11 @@ const HISTORY_SIZE = 40
 const TABS = [
   { key: "viewer", label: "Visualiseur", param: "" },
   { key: "dp", label: "Exercice DP", param: "dp" },
+  { key: "combos", label: "Mes combos", param: "combos" },
 ]
 
 const route = useRoute()
-const activeTab = computed(() => (route.params.tab === "dp" ? "dp" : "viewer"))
+const activeTab = computed(() => (["dp", "combos"].includes(route.params.tab) ? route.params.tab : "viewer"))
 
 const pad = useGamepad()
 const { supported, gamepads, selectedIndex, selected, state } = pad
@@ -186,9 +189,9 @@ h1 {
   box-sizing: border-box;
   margin-bottom: 1.5rem;
   padding: 1.5rem;
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #e5e9f0;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   width: 100%;
 
   h2 {
@@ -201,7 +204,7 @@ h1 {
   display: flex;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid #e5e9f0;
+  border-bottom: 1px solid var(--border);
 }
 
 .tab {
@@ -214,14 +217,14 @@ h1 {
   }
 
   &.active {
-    color: #4354b9;
-    border-bottom-color: #5366ce;
+    color: var(--accent);
+    border-bottom-color: var(--accent);
   }
 }
 
 .hint {
   margin-block: 0.75rem 0;
-  color: #5c626c;
+  color: var(--muted);
 }
 
 .pads {
@@ -236,8 +239,8 @@ h1 {
   flex-direction: column;
   gap: 0.2rem;
   padding: 0.75rem 1rem;
-  background-color: white;
-  border: 1px solid #e5e9f0;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   font: inherit;
   color: inherit;
@@ -245,18 +248,18 @@ h1 {
   cursor: pointer;
 
   &.active {
-    background-color: #ecf1ff;
-    border-color: #5366ce;
+    background-color: var(--accent-soft);
+    border-color: var(--accent);
   }
 
   .name {
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
   }
 
   .meta {
     font-size: 0.85em;
-    color: #5c626c;
+    color: var(--muted);
   }
 }
 
@@ -270,11 +273,11 @@ h1 {
     min-height: 1.2em;
     font-size: 2em;
     font-weight: 700;
-    color: #4354b9;
+    color: var(--accent);
   }
 
   .numpad {
-    color: #5c626c;
+    color: var(--muted);
     font-weight: 600;
   }
 }
@@ -319,10 +322,10 @@ h1 {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #f4f5f8;
-  border: 2px solid #dbdee3;
+  background-color: var(--surface-2);
+  border: 2px solid var(--border-strong);
   font-weight: 700;
-  color: #5c626c;
+  color: var(--muted);
   transition: background-color 0.05s ease, border-color 0.05s ease;
 
   &.small {
@@ -332,12 +335,12 @@ h1 {
   }
 
   &.on {
-    background-color: #5366ce;
-    border-color: #4354b9;
-    color: white;
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
 
     .pad-label {
-      color: #ecf1ff;
+      color: rgba(0, 0, 0, 0.55);
     }
   }
 
@@ -348,7 +351,7 @@ h1 {
   .pad-label {
     font-size: 0.6em;
     font-weight: 600;
-    color: #8a909b;
+    color: var(--muted);
   }
 }
 
@@ -373,19 +376,19 @@ h1 {
     display: flex;
     justify-content: space-between;
     padding: 0.4rem 0.75rem;
-    background-color: #f9fafd;
+    background-color: var(--surface-2);
     border-radius: 8px;
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
 
     &.neutral {
       font-weight: 500;
-      color: #8a909b;
+      color: var(--muted);
     }
 
     .frames {
       font-variant-numeric: tabular-nums;
-      color: #5c626c;
+      color: var(--muted);
     }
   }
 }
@@ -393,7 +396,7 @@ h1 {
 .raw summary {
   cursor: pointer;
   font-weight: 700;
-  color: oklch(0.27 0.02 265);
+  color: var(--text);
 }
 
 .raw-grid {
@@ -410,22 +413,22 @@ h1 {
   min-width: 52px;
   padding: 0.3rem 0.4rem;
   border-radius: 6px;
-  background-color: #f4f5f8;
+  background-color: var(--surface-2);
   font-size: 0.8em;
   font-weight: 700;
-  color: #5c626c;
+  color: var(--muted);
 
   small {
     font-weight: 500;
   }
 
   &.on {
-    background-color: #5366ce;
-    color: white;
+    background-color: var(--accent);
+    color: var(--on-accent);
   }
 
   &.axis {
-    background-color: #fbefd9;
+    background-color: var(--warning-soft);
   }
 }
 </style>

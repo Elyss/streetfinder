@@ -84,14 +84,14 @@ h1 {
   align-items: center;
   gap: 0.4rem;
   padding: 1.5rem 1rem;
-  background-color: white;
-  border-radius: 15px;
-  border: 1px solid #e5e9f0;
+  background-color: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
     text-decoration: none;
-    border-color: #5366ce;
+    border-color: var(--accent);
     box-shadow: 0 4px 14px rgba(83, 102, 206, 0.15);
   }
 
@@ -100,8 +100,8 @@ h1 {
     height: 64px;
     border-radius: 50%;
     object-fit: cover;
-    background-color: #ecf1ff;
-    box-shadow: 0 0 0 2px #ecf1ff;
+    background-color: var(--accent-soft);
+    box-shadow: 0 0 0 2px var(--accent-soft);
   }
 
   .initial {
@@ -111,8 +111,8 @@ h1 {
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background-color: #ecf1ff;
-    color: #4554b2;
+    background-color: var(--accent-soft);
+    color: var(--accent);
     font-size: 1.8em;
     font-weight: 700;
   }
@@ -120,13 +120,13 @@ h1 {
   .name {
     font-size: 1.1em;
     font-weight: 700;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
   }
 
   .vitality {
     font-size: 0.85em;
     font-weight: 500;
-    color: #5c626c;
+    color: var(--muted);
   }
 }
 </style>

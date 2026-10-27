@@ -159,13 +159,13 @@ onMounted(load)
     }
 
     .btn:hover{
-        color: #fff;
+        color: var(--on-accent);
     }
 }
 
 .hint{
     margin: 0;
-    color: #5c626c;
+    color: var(--muted);
     font-size: 0.92em;
 }
 
@@ -181,7 +181,7 @@ onMounted(load)
         max-width: 360px;
         min-width: 0;
         padding: 0.55rem 0.8rem;
-        border: 1px solid #dbdee3;
+        border: 1px solid var(--border-strong);
         border-radius: 8px;
         font: inherit;
     }
@@ -194,15 +194,15 @@ onMounted(load)
         cursor: pointer;
 
         input{
-            accent-color: #5366ce;
+            accent-color: var(--accent);
         }
     }
 }
 
 .table{
-    background: white;
-    border: 1px solid #e5e9f0;
-    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
     overflow: hidden;
 }
 
@@ -217,13 +217,13 @@ th{
     padding: 0.8rem 1rem;
     font-size: 0.8em;
     text-transform: uppercase;
-    color: #8a909b;
-    border-bottom: 1px solid #e5e9f0;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
 }
 
 td{
     padding: 0.7rem 1rem;
-    border-bottom: 1px solid #f1f3f6;
+    border-bottom: 1px solid var(--surface-2);
     vertical-align: middle;
 }
 
@@ -233,15 +233,15 @@ tr:last-child td{
 
 .name{
     font-weight: 600;
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
 }
 
 .you{
     margin-left: 0.5rem;
     padding: 1px 6px;
     border-radius: 6px;
-    background: #ecf1ff;
-    color: #4554b2;
+    background: var(--accent-soft);
+    color: var(--accent);
     font-size: 0.75em;
 }
 
@@ -251,7 +251,7 @@ tr:last-child td{
 
 .empty{
     text-align: center;
-    color: #8a909b;
+    color: var(--muted);
 }
 
 .switch{
@@ -261,7 +261,7 @@ tr:last-child td{
     padding: 0;
     border: 0;
     border-radius: 11px;
-    background: #dbdee3;
+    background: var(--border-strong);
     cursor: pointer;
     transition: background-color 0.15s;
 
@@ -272,12 +272,12 @@ tr:last-child td{
         width: 16px;
         height: 16px;
         border-radius: 50%;
-        background: white;
+        background: var(--surface);
         transition: transform 0.15s;
     }
 
     &.on{
-        background: #2FA46A;
+        background: var(--success);
 
         span{
             transform: translateX(16px);
@@ -301,12 +301,12 @@ tr:last-child td{
     border: 0;
     border-radius: 6px;
     background: none;
-    color: #8a909b;
+    color: var(--muted);
     cursor: pointer;
 
     &:hover{
-        background: #FBE6E4;
-        color: #C62525;
+        background: var(--danger-soft);
+        color: var(--danger);
     }
 }
 
@@ -327,7 +327,7 @@ tr:last-child td{
     tr{
         display: block;
         padding: 0.6rem 0;
-        border-bottom: 1px solid #e5e9f0;
+        border-bottom: 1px solid var(--border);
     }
 
     td{
@@ -340,7 +340,7 @@ tr:last-child td{
         &[data-label]::before{
             content: attr(data-label);
             font-weight: 600;
-            color: #8a909b;
+            color: var(--muted);
         }
     }
 }

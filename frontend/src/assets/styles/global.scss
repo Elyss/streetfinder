@@ -1,29 +1,131 @@
 @use "./buttons" as *;
 
-// Global styles included on every page.
-body{
-    background-color: #f8faff;
-    padding: 0;
-    margin: 0;
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-    color: #424853;
+// ------------------------------------------------------------------ theme
+// Fighting-game look: night background, cream text, fire orange and yellow.
+:root{
+    --bg: #0c0a10;
+    --bg-2: #120e17;
+    --surface: #17131d;
+    --surface-2: #211b29;
+    --border: #2a2233;
+    --border-strong: #3b3146;
+    --text: #f4ede4;
+    --muted: #a59dae;
+
+    --accent: #ff5a1f;
+    --accent-hover: #ff7438;
+    --accent-soft: rgba(255, 90, 31, 0.13);
+    --accent-border: rgba(255, 90, 31, 0.45);
+    --on-accent: #170c07;
+    --yellow: #fbbf24;
+
+    --danger: #ff4d5e;
+    --danger-soft: rgba(255, 77, 94, 0.14);
+    --success: #34d399;
+    --success-soft: rgba(52, 211, 153, 0.13);
+    --warning-soft: rgba(251, 191, 36, 0.14);
+
+    --font-display: "Anton", Impact, "Arial Narrow", sans-serif;
+    --font-condensed: "Barlow Condensed", "Arial Narrow", sans-serif;
+    --font-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+    --radius: 4px;
+    --radius-btn: 2px;
+    --btn-case: uppercase;
+    --btn-spacing: 0.06em;
+
+    color-scheme: dark;
 }
 
-h1,h2{
-    color: oklch(0.27 0.02 265);
+// The board editor stays a light whiteboard: the colors of the drawn objects must stay true
+.light-theme{
+    --bg: #fbfcfe;
+    --bg-2: #f8faff;
+    --surface: #ffffff;
+    --surface-2: #f1f3f6;
+    --border: #e5e9f0;
+    --border-strong: #dbdee3;
+    --text: #2e333d;
+    --muted: #5c626c;
+
+    --accent: #5366ce;
+    --accent-hover: #4354b9;
+    --accent-soft: #ecf1ff;
+    --accent-border: #d4ddf9;
+    --on-accent: #ffffff;
+
+    --danger: #da3838;
+    --danger-soft: #fbe6e4;
+    --success: #2fa46a;
+    --success-soft: #e3f5eb;
+    --warning-soft: #fbefd9;
+
+    --radius-btn: 8px;
+    --btn-case: none;
+    --btn-spacing: 0;
+
+    color-scheme: light;
+    color: var(--text);
+    font-family: var(--font-body);
+}
+
+// ------------------------------------------------------------------ base
+body{
+    background-color: var(--bg);
+    padding: 0;
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--text);
+}
+
+h1{
+    font-family: var(--font-display);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 1.05;
+    color: var(--text);
+}
+
+h2{
+    font-family: var(--font-condensed);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--text);
+}
+
+.light-theme h1,
+.light-theme h2{
+    font-family: var(--font-body);
+    text-transform: none;
+    letter-spacing: 0;
 }
 
 b{
-    color: oklch(0.27 0.02 265);
+    color: var(--text);
+}
+
+// Text fields follow the theme (zero specificity: components can still style them)
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea){
+    background-color: var(--bg-2);
+    color: var(--text);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+
+    &::placeholder{
+        color: var(--muted);
+        opacity: 0.8;
+    }
 }
 
 a{
-    color: #424853;
+    color: var(--text);
     font-weight: 600;
 
     text-decoration: none;
     &:hover{
-        color: #4354b9;
+        color: var(--accent);
         text-decoration: underline;
         font-weight: 600;
     }
@@ -35,18 +137,20 @@ a{
     width: min(460px, calc(100% - 2rem));
     margin: 3rem auto;
     padding: 2rem;
-    background-color: white;
-    border: 1px solid #e5e9f0;
-    border-radius: 15px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--accent);
+    border-radius: var(--radius);
 
     h1{
-        margin: 0 0 0.5rem;
-        font-size: 1.7em;
+        margin: 0 0 0.75rem;
+        font-size: 2.2em;
     }
 
     > p{
         margin: 0 0 1.25rem;
         line-height: 1.5;
+        color: var(--muted);
     }
 
     form{
@@ -57,30 +161,33 @@ a{
 
     label{
         margin-top: 0.6rem;
-        font-size: 0.9em;
-        font-weight: 600;
-        color: oklch(0.27 0.02 265);
+        font-family: var(--font-condensed);
+        font-size: 0.95em;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--text);
     }
 
     input:not([type="checkbox"]), select{
         box-sizing: border-box;
         width: 100%;
         padding: 0.65rem 0.8rem;
-        border: 1px solid #dbdee3;
-        border-radius: 8px;
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius);
         font: inherit;
-        color: #2e333d;
-        background: white;
+        color: var(--text);
+        background: var(--bg-2);
 
         &:focus{
             outline: none;
-            border-color: #5366ce;
-            box-shadow: 0 0 0 3px #ecf1ff;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
         }
 
         &:disabled{
-            color: #8a909b;
-            background: #f9fafd;
+            color: var(--muted);
+            background: var(--surface-2);
             cursor: not-allowed;
         }
     }
@@ -103,18 +210,18 @@ a{
 .form-error{
     margin: 0.5rem 0 0;
     padding: 0.6rem 0.8rem;
-    border-radius: 8px;
-    background: #FBE6E4;
-    color: #C62525;
+    border-radius: var(--radius);
+    background: var(--danger-soft);
+    color: var(--danger);
     font-size: 0.9em;
 }
 
 .form-success{
     margin: 0.5rem 0 0;
     padding: 0.6rem 0.8rem;
-    border-radius: 8px;
-    background: #E3F5EB;
-    color: #27905C;
+    border-radius: var(--radius);
+    background: var(--success-soft);
+    color: var(--success);
     font-size: 0.9em;
     line-height: 1.5;
 }

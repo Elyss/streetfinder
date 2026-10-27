@@ -50,11 +50,11 @@ const hidden = ref(true)
         padding: 0.2rem;
         border: 0;
         background: none;
-        color: #8a909b;
+        color: var(--muted);
         cursor: pointer;
 
         &:hover{
-            color: #4354b9;
+            color: var(--accent);
         }
     }
 }

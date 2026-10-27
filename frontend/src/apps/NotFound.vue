@@ -20,7 +20,7 @@ import Header from "@/apps/Header.vue"
 }
 
 .btn:hover {
-    color: #fff;
+    color: var(--on-accent);
     text-decoration: none;
 }
 </style>

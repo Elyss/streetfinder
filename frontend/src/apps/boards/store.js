@@ -57,7 +57,8 @@ export const useBoardStore = defineStore("board", () => {
 
   // ------------------------------------------------------------ connection
 
-  function open(boardId) {
+  /** share: token of the share link, when the board is opened without an account */
+  function open(boardId, { share = null } = {}) {
     close()
     meta.id = boardId
     status.value = "connecting"
@@ -74,7 +75,7 @@ export const useBoardStore = defineStore("board", () => {
       onOps: applyRemote,
       onMessage,
       onStatus: (s) => (status.value = s),
-    })
+    }, { share })
   }
 
   function close() {

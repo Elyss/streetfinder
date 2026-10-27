@@ -22,12 +22,13 @@ const routes = [
 
   // -- Apps (activated accounts) --
   { path: "/characters", name: "characters", component: () => import("@/apps/personnages/Characters.vue"), meta: { requiresAuth: true } },
-  { path: "/characters/:slug/:tab(combo)?", name: "character", component: () => import("@/apps/personnages/Character.vue"), meta: { requiresAuth: true } },
-  { path: "/inputbreaker/:tab(dp)?", name: "input-breaker", component: () => import("@/apps/inputbreaker/InputBreaker.vue"), meta: { requiresAuth: true } },
+  { path: "/characters/:slug/:tab(combo|builder)?", name: "character", component: () => import("@/apps/personnages/Character.vue"), meta: { requiresAuth: true } },
+  { path: "/inputbreaker/:tab(dp|combos)?", name: "input-breaker", component: () => import("@/apps/inputbreaker/InputBreaker.vue"), meta: { requiresAuth: true } },
   { path: "/boards", name: "boards", component: () => import("@/apps/boards/BoardsList.vue"), meta: { requiresAuth: true } },
   // Share link (write or read): the user joins the board with that right
-  { path: "/boards/partage/:token", name: "board-join", component: () => import("@/apps/boards/JoinBoard.vue"), props: true, meta: { requiresAuth: true } },
-  { path: "/boards/:id", name: "board", component: () => import("@/apps/boards/BoardEditor.vue"), meta: { requiresAuth: true } },
+  // Public: without an account, a valid link gives access to the board (?share=<token>)
+  { path: "/boards/partage/:token", name: "board-join", component: () => import("@/apps/boards/JoinBoard.vue"), props: true },
+  { path: "/boards/:id", name: "board", component: () => import("@/apps/boards/BoardEditor.vue"), meta: { requiresAuth: true, shareable: true } },
 
   // -- 404 --
   { path: "/404", name: "not-found", component: () => import("@/apps/NotFound.vue") },
@@ -48,12 +49,15 @@ router.beforeEach(async (to) => {
     }
   }
 
-  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+  // A board opened through a share link needs no account (the link token is checked by the API)
+  const shared = to.meta.shareable && !!to.query.share
+
+  if (to.meta.requiresAuth && !auth.isLoggedIn && !shared) {
     return { name: "login", query: { next: to.fullPath } }
   }
 
   // Account not activated yet: only the home page (which says so) is reachable
-  if (to.meta.requiresAuth && !auth.isActivated) {
+  if (to.meta.requiresAuth && !auth.isActivated && !shared) {
     return { name: "home" }
   }
 

@@ -6,7 +6,9 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - DOMAIN=elyss.fr
+      - DOMAIN=delay-lama.fr
+      # Redirected to DOMAIN (elyss.fr: former domain, kept temporarily)
+      - REDIRECT_FROM=www.delay-lama.fr, elyss.fr
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data  # Certificates, must persist across restarts
@@ -25,8 +27,8 @@ services:
       - ./media:/app/media  # Board images uploaded by users, served by Caddy
     environment:
       - DEBUG=False
-      - ALLOWED_HOSTS=elyss.fr
-      - FRONTEND_URL=https://elyss.fr
+      - ALLOWED_HOSTS=delay-lama.fr
+      - FRONTEND_URL=https://delay-lama.fr
       - REDIS_URL=redis://redis:6379/0
     expose:
       - "8000"
