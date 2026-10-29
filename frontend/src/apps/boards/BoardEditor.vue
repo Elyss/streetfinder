@@ -1,5 +1,5 @@
 <template>
-  <div class="board-page light-theme">
+  <div class="board-page light-theme" :class="{ 'board-dark': dark }">
     <div v-if="notFound" class="not-found">
       <h1>Board introuvable</h1>
       <p>Ce lien ne correspond à aucun board (il a peut-être été supprimé).</p>
@@ -32,6 +32,8 @@
           <span class="avatar me" :style="{ background: store.me.color }" :title="`Vous : ${store.me.name}`">{{ initials(store.me.name) }}</span>
         </div>
 
+        <button type="button" class="icon-btn" :title="dark ? 'Mode clair' : 'Mode sombre'" :aria-label="dark ? 'Mode clair' : 'Mode sombre'"
+          @click="dark = !dark"><Icon :name="dark ? 'sun' : 'moon'" /></button>
         <button type="button" class="icon-btn" title="Rechercher (Ctrl+F)" aria-label="Rechercher" @click="openSearch"><Icon name="search" /></button>
         <div class="menu">
           <button type="button" class="icon-btn" title="Paramètres du board" aria-label="Paramètres" @click="toggleMenu('settings')"><Icon name="settings" /></button>
@@ -110,7 +112,7 @@
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue"
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch, watchEffect } from "vue"
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router"
 import BoardCanvas from "./components/BoardCanvas.vue"
 import Toolbar from "./components/Toolbar.vue"
@@ -128,6 +130,8 @@ import { center, union } from "./lib/geometry"
 import { escapeHtml, plainText } from "./lib/sanitize"
 import { buildSvg, download, pngToPdfBlob, safeFilename, svgToPngBlob } from "./lib/exporter"
 import { encodeBoard } from "./lib/transfer"
+import { cellRange, removeCol, removeRow } from "./lib/table"
+import { boardTheme, loadDark, saveDark } from "./lib/theme"
 
 const STATUS = { connecting: "Connexion…", offline: "Hors ligne · modifications conservées", saving: "Enregistrement…", saved: "Enregistré" }
 const BACKGROUNDS = { dots: "Grille de points", grid: "Quadrillage", plain: "Uni" }
@@ -135,6 +139,13 @@ const BACKGROUNDS = { dots: "Grille de points", grid: "Quadrillage", plain: "Uni
 const route = useRoute()
 const router = useRouter()
 const store = useBoardStore()
+
+// Dark mode: a preference of the viewer; exports are always rendered in light mode
+const dark = ref(loadDark())
+watch(dark, saveDark)
+watchEffect(() => (boardTheme.dark = dark.value && !store.exporting))
+// Frames under the objects, to pick their ink
+boardTheme.items = store.items
 const auth = useAuthStore()
 const canvas = ref(null)
 const toolbar = ref(null)
@@ -298,7 +309,8 @@ watch(() => [search.query, search.open], () => {
   }
   search.results = Object.values(store.items)
     .filter((it) => {
-      const text = [plainText(it.text), ...(it.labels || []).map((l) => l.text)].join(" ").toLowerCase()
+      const cells = (it.cells || []).flat().map((c) => plainText(c.text))
+      const text = [plainText(it.text), ...(it.labels || []).map((l) => l.text), ...cells].join(" ").toLowerCase()
       return text.includes(q)
     })
     .sort((a, b) => (store.bounds(a).y - store.bounds(b).y) || (store.bounds(a).x - store.bounds(b).x))
@@ -488,7 +500,7 @@ function duplicate() {
 
 // ------------------------------------------------------------ keyboard
 
-const TOOL_KEYS = { v: "select", h: "hand", s: "sticky", t: "text", l: "connector", f: "frame" }
+const TOOL_KEYS = { v: "select", h: "hand", s: "sticky", t: "text", l: "connector", f: "frame", g: "table" }
 const SHAPE_KEYS = { r: "rect", o: "ellipse", d: "diamond" }
 
 function onKeydown(e) {
@@ -533,7 +545,20 @@ function onKeydown(e) {
   if (store.readOnly && !navigation) return
 
   if (e.key === "Delete" || e.key === "Backspace") {
-    if (sel.length) store.removeItems(sel)
+    const line = store.tableSel && store.items[store.tableSel.id]
+    // A column / row picked in a table: only that one goes
+    if (line && store.tableSel.axis === "cells") {
+      // Range of cells: their texts are cleared
+      const a = cellRange(line, store.tableSel.from, store.tableSel.to)
+      const cells = line.cells.map((row, r) => row.map((cell, c) =>
+        (r >= a.r && r < a.r + a.rs && c >= a.c && c < a.c + a.cs ? { ...cell, text: "" } : { ...cell })))
+      store.updateItem(line.id, { cells })
+    } else if (line) {
+      const { axis, index } = store.tableSel
+      const patch = axis === "col" ? removeCol(line, index) : removeRow(line, index)
+      if (patch) store.updateItem(line.id, patch)
+      store.tableSel = null
+    } else if (sel.length) store.removeItems(sel)
   } else if (e.key === "Escape") {
     toolbar.value?.closeFlyout()
     if (search.open) closeSearch()
@@ -541,7 +566,8 @@ function onKeydown(e) {
     else store.select([])
   } else if ((e.key === "Enter" || e.key === "F2") && sel.length === 1) {
     const it = store.items[sel[0]]
-    if (it && !it.locked && (hasText(it) || it.type === "frame")) store.editing = { id: it.id, selectAll: true }
+    if (it && !it.locked && it.type === "table") store.editing = { id: it.id, cell: [0, 0] }
+    else if (it && !it.locked && (hasText(it) || it.type === "frame")) store.editing = { id: it.id, selectAll: true }
   } else if (e.key.startsWith("Arrow") && sel.length) {
     const step = e.shiftKey ? 10 : 1
     const d = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key]
@@ -635,7 +661,7 @@ onBeforeUnmount(() => {
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: #fbfcfe;
+  background: var(--bg);
 }
 
 .topbar {
@@ -644,8 +670,8 @@ onBeforeUnmount(() => {
   gap: 8px;
   height: 52px;
   padding: 0 12px;
-  background: white;
-  border-bottom: 1px solid #e5e9f0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   z-index: 20;
 }
 
@@ -656,19 +682,19 @@ onBeforeUnmount(() => {
   font: inherit;
   font-weight: 700;
   font-size: 1.02em;
-  color: oklch(0.27 0.02 265);
+  color: var(--text);
   border: 1px solid transparent;
   border-radius: 6px;
   padding: 5px 8px;
   background: none;
 
   &:hover {
-    border-color: #e5e9f0;
+    border-color: var(--border);
   }
 
   &:focus {
     outline: none;
-    border-color: #5366ce;
+    border-color: var(--accent);
   }
 }
 
@@ -678,12 +704,12 @@ onBeforeUnmount(() => {
   font-size: 0.75em;
   font-weight: 700;
   white-space: nowrap;
-  background: #E3F5EB;
-  color: #27905C;
+  background: var(--success-soft);
+  color: var(--success);
 
   &.view {
-    background: #ecf1ff;
-    color: #4554b2;
+    background: var(--accent-soft);
+    color: var(--accent-hover);
   }
 }
 
@@ -699,7 +725,7 @@ onBeforeUnmount(() => {
 
 .status {
   font-size: 0.78em;
-  color: #8a909b;
+  color: var(--muted);
   white-space: nowrap;
 
   &.offline {
@@ -719,17 +745,17 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 8px;
   background: none;
-  color: #424853;
+  color: var(--text);
   cursor: pointer;
 
   &:hover {
-    background: #f1f3f6;
+    background: var(--surface-2);
     text-decoration: none;
   }
 
   &.active {
-    background: #ecf1ff;
-    color: #4554b2;
+    background: var(--accent-soft);
+    color: var(--accent-hover);
   }
 }
 
@@ -744,7 +770,7 @@ onBeforeUnmount(() => {
   height: 30px;
   margin-left: -6px;
   border-radius: 50%;
-  border: 2px solid white;
+  border: 2px solid var(--surface);
   color: white;
   font: inherit;
   font-size: 0.72em;
@@ -752,7 +778,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 
   &.following {
-    box-shadow: 0 0 0 2px #5366ce;
+    box-shadow: 0 0 0 2px var(--accent);
   }
 
   &.me {
@@ -782,8 +808,8 @@ onBeforeUnmount(() => {
   gap: 2px;
   min-width: 230px;
   padding: 8px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(27, 36, 51, 0.14);
   font-size: 0.88em;
@@ -793,7 +819,7 @@ onBeforeUnmount(() => {
     font-size: 0.78em;
     font-weight: 700;
     text-transform: uppercase;
-    color: #8a909b;
+    color: var(--muted);
   }
 
   > button:not(.btn) {
@@ -806,12 +832,12 @@ onBeforeUnmount(() => {
     cursor: pointer;
 
     &:hover {
-      background: #f1f3f6;
+      background: var(--surface-2);
     }
 
     &.active {
-      background: #ecf1ff;
-      color: #4554b2;
+      background: var(--accent-soft);
+      color: var(--accent-hover);
       font-weight: 600;
     }
   }
@@ -844,7 +870,7 @@ onBeforeUnmount(() => {
   }
 
   .link {
-    color: #4554b2;
+    color: var(--accent-hover);
     font-weight: 600;
   }
 }
@@ -872,11 +898,11 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 8px;
   padding: 6px 8px 6px 12px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 6px 20px rgba(27, 36, 51, 0.12);
-  color: #5c626c;
+  color: var(--muted);
 
   input {
     width: min(260px, 50vw);
@@ -887,14 +913,14 @@ onBeforeUnmount(() => {
 
   .count {
     font-size: 0.8em;
-    color: #8a909b;
+    color: var(--muted);
   }
 
   button {
     border: 0;
     background: none;
     cursor: pointer;
-    color: #5c626c;
+    color: var(--muted);
   }
 }
 
@@ -907,8 +933,8 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 2px;
   padding: 4px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(27, 36, 51, 0.08);
 
@@ -920,15 +946,15 @@ onBeforeUnmount(() => {
     border: 0;
     border-radius: 6px;
     background: none;
-    color: #424853;
+    color: var(--text);
     cursor: pointer;
 
     &:hover {
-      background: #f1f3f6;
+      background: var(--surface-2);
     }
 
     &.active {
-      color: #4554b2;
+      color: var(--accent-hover);
     }
   }
 
@@ -939,7 +965,7 @@ onBeforeUnmount(() => {
     font: inherit;
     font-size: 0.85em;
     font-weight: 600;
-    color: #424853;
+    color: var(--text);
   }
 }
 
@@ -952,7 +978,7 @@ onBeforeUnmount(() => {
   max-width: calc(100% - 32px);
   padding: 10px 16px;
   border-radius: 10px;
-  background: #2e333d;
+  background: var(--text);
   color: white;
   font-size: 0.88em;
 }

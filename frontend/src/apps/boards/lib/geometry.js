@@ -138,6 +138,7 @@ export function textInset(item) {
   const p = 10
   if (item.type === "sticky") return { l: 14, t: 14, r: 14, b: 14 }
   if (item.type === "text") return { l: 2, t: 4, r: 2, b: 4 }
+  if (item.type === "cell") return { l: 8, t: 4, r: 8, b: 4 }
   switch (item.shape) {
     case "diamond": return { l: w * 0.2, t: h * 0.2, r: w * 0.2, b: h * 0.2 }
     case "ellipse": return { l: w * 0.12, t: h * 0.1, r: w * 0.12, b: h * 0.1 }

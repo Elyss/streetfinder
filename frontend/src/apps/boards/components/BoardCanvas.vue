@@ -6,10 +6,10 @@
     <svg class="layer" aria-hidden="true">
       <defs>
         <pattern id="sf-bg-dots" :width="gridPx" :height="gridPx" patternUnits="userSpaceOnUse" :x="mod(view.ox, gridPx)" :y="mod(view.oy, gridPx)">
-          <circle cx="1" cy="1" r="1" fill="#c3cad6" />
+          <circle cx="1" cy="1" r="1" :fill="boardTheme.dark ? '#3d414c' : '#c3cad6'" />
         </pattern>
         <pattern id="sf-bg-grid" :width="gridPx" :height="gridPx" patternUnits="userSpaceOnUse" :x="mod(view.ox, gridPx)" :y="mod(view.oy, gridPx)">
-          <path :d="`M${gridPx} 0H0V${gridPx}`" fill="none" stroke="#e1e6ee" stroke-width="1" />
+          <path :d="`M${gridPx} 0H0V${gridPx}`" fill="none" :stroke="boardTheme.dark ? '#2c2f37' : '#e1e6ee'" stroke-width="1" />
         </pattern>
       </defs>
       <rect v-if="store.meta.background !== 'plain'" width="100%" height="100%" :fill="`url(#sf-bg-${store.meta.background})`" />
@@ -28,7 +28,9 @@
         <ItemView v-for="it in visible.frames" :key="it.id" :item="it" :editing="store.editing?.id === it.id" />
         <ConnectorView v-for="c in visible.connectors" :key="c.id" :conn="c" :zoom="view.zoom"
           :editing-label="store.editing?.id === c.id ? store.editing.label : null" />
-        <ItemView v-for="it in visible.nodes" :key="it.id" :item="it" :editing="store.editing?.id === it.id" />
+        <ItemView v-for="it in visible.nodes" :key="it.id" :item="it" :editing="store.editing?.id === it.id"
+          :editing-cell="store.editing?.id === it.id ? store.editing.cell || null : null"
+          :selected="it.type === 'table' && store.selection.includes(it.id)" />
 
         <g v-if="!store.exporting" class="ui">
           <!-- Search results -->
@@ -61,6 +63,23 @@
               :cx="end.p.x" :cy="end.p.y" :r="6 / view.zoom" :fill="end.attached ? '#5366ce' : '#fff'" stroke="#5366ce"
               :stroke-width="2 / view.zoom" style="cursor: move" />
           </g>
+
+          <!-- Selected table: grips (pick / drag a column or row) and "+" to insert between them -->
+          <g v-if="tableUi" :style="{ pointerEvents: drag ? 'none' : null }">
+            <rect v-if="tableUi.picked" v-bind="tableUi.picked" fill="rgba(83,102,206,.08)" stroke="#5366ce"
+              :stroke-width="2 / view.zoom" style="pointer-events: none" />
+            <rect v-for="g in tableUi.grips" :key="g.key" :data-table-grip="g.key" :data-owner="tableUi.id" class="table-grip"
+              :class="{ active: g.active }" :x="g.x" :y="g.y" :width="g.w" :height="g.h" :rx="3 / view.zoom">
+              <title>{{ g.title }}</title>
+            </rect>
+            <g v-for="a in tableUi.adds" :key="a.key" :data-table-add="a.key" :data-owner="tableUi.id" class="table-add"
+              :transform="`translate(${a.x} ${a.y}) scale(${1 / view.zoom})`">
+              <title>{{ a.title }}</title>
+              <circle r="8" />
+              <path d="M-3.5 0H3.5M0 -3.5V3.5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" />
+            </g>
+          </g>
+          <line v-if="tableDrop" v-bind="tableDrop" stroke="#5366ce" :stroke-width="3 / view.zoom" stroke-linecap="round" />
 
           <!-- Hover affordances: anchor points and the "+" quick-create arrows -->
           <g v-if="affordance">
@@ -123,6 +142,8 @@ import {
   nearestT, rectFromPoints, rectOf, union,
 } from "../lib/geometry"
 import { plainText } from "../lib/sanitize"
+import { boardTheme } from "../lib/theme"
+import { cellAt, cellRange, dropIndex, gridAt, insertCol, insertRow, moveBorder, moveLine, tableLayout } from "../lib/table"
 
 const props = defineProps({
   highlights: { type: Array, default: () => [] },
@@ -152,7 +173,7 @@ const QUICK_SHAPES = [
   { label: "Sticky note", type: "sticky" },
   { label: "Texte", type: "text" },
 ]
-const LINKABLE = ["shape", "sticky", "image", "text"]
+const LINKABLE = ["shape", "sticky", "image", "text", "table"]
 const MAGNET = 24 // px on screen within which a connector end snaps to an object
 
 const mod = (a, n) => ((a % n) + n) % n
@@ -283,6 +304,7 @@ const affordance = computed(() => {
   }
   const it = id && store.items[id]
   if (!it || !LINKABLE.includes(it.type) || store.editing?.id === id || (it.locked && !connecting)) return null
+  if (!connecting && tableUi.value?.id === id) return null
   const r = rectOf(it)
   const sides = Object.keys(SIDES)
   return {
@@ -294,6 +316,57 @@ const affordance = computed(() => {
     }),
   }
 })
+
+// ------------------------------------------------------------ table columns / rows
+
+const tableUi = computed(() => {
+  const sel = store.selectedItems
+  const it = sel.length === 1 && sel[0].type === "table" && !sel[0].locked && !store.readOnly && store.tool === "select" ? sel[0] : null
+  if (!it || view.zoom < 0.2) return null
+  const z = view.zoom
+  const { xs, ys, cols, rows } = tableLayout(it)
+  const picked = store.tableSel?.id === it.id ? store.tableSel : null
+  const grips = [
+    ...cols.map((w, i) => ({ key: `col:${i}`, x: it.x + xs[i] + 3 / z, y: it.y - 13 / z, w: Math.max(w - 6 / z, 2 / z), h: 8 / z,
+      active: picked?.axis === "col" && picked.index === i, title: "Colonne : cliquer pour la sélectionner, glisser pour la déplacer" })),
+    ...rows.map((h, i) => ({ key: `row:${i}`, x: it.x - 13 / z, y: it.y + ys[i] + 3 / z, w: 8 / z, h: Math.max(h - 6 / z, 2 / z),
+      active: picked?.axis === "row" && picked.index === i, title: "Ligne : cliquer pour la sélectionner, glisser pour la déplacer" })),
+  ]
+  const adds = [
+    ...xs.map((x, i) => ({ key: `col:${i}`, x: it.x + x, y: it.y - 28 / z, title: "Insérer une colonne ici" })),
+    ...ys.map((y, i) => ({ key: `row:${i}`, x: it.x - 28 / z, y: it.y + y, title: "Insérer une ligne ici" })),
+  ]
+  let pickedRect = null
+  if (picked?.axis === "cells") {
+    const a = cellRange(it, picked.from, picked.to)
+    if (a.r + a.rs <= rows.length && a.c + a.cs <= cols.length) {
+      pickedRect = { x: it.x + xs[a.c], y: it.y + ys[a.r], width: xs[a.c + a.cs] - xs[a.c], height: ys[a.r + a.rs] - ys[a.r] }
+    }
+  } else if (picked && picked.index < (picked.axis === "col" ? cols.length : rows.length)) {
+    pickedRect = picked.axis === "col"
+      ? { x: it.x + xs[picked.index], y: it.y, width: cols[picked.index], height: it.h }
+      : { x: it.x, y: it.y + ys[picked.index], width: it.w, height: rows[picked.index] }
+  }
+  return { id: it.id, grips, adds, picked: pickedRect }
+})
+
+// Where a dragged column / row will land
+const tableDrop = computed(() => {
+  const d = drag.value
+  const it = d?.kind === "table-grip" && d.moved && store.items[d.id]
+  if (!it || d.at === d.index || d.at === d.index + 1) return null
+  const { xs, ys } = tableLayout(it)
+  return d.axis === "col"
+    ? { x1: it.x + xs[d.at], y1: it.y - 6 / view.zoom, x2: it.x + xs[d.at], y2: it.y + it.h + 6 / view.zoom }
+    : { x1: it.x - 6 / view.zoom, y1: it.y + ys[d.at], x2: it.x + it.w + 6 / view.zoom, y2: it.y + ys[d.at] }
+})
+
+function insertTableLine(id, axis, at) {
+  const it = store.items[id]
+  if (!it) return
+  store.updateItem(id, axis === "col" ? insertCol(it, at) : insertRow(it, at))
+  store.tableSel = { id, axis, index: at }
+}
 
 const marqueeRect = computed(() => {
   const d = drag.value
@@ -343,10 +416,18 @@ const cursorClass = computed(() => {
 // ------------------------------------------------------------ hit testing
 
 function hitInfo(el) {
-  const hit = el?.closest?.("[data-board-link],[data-handle],[data-anchor],[data-plus],[data-end],[data-label],[data-frame-body],[data-id]")
+  const hit = el?.closest?.("[data-board-link],[data-table-grip],[data-table-add],[data-table-border],[data-handle],[data-anchor],[data-plus],[data-end],[data-label],[data-frame-body],[data-id]")
   if (!hit) return { kind: "bg" }
   const ds = hit.dataset
   if (ds.boardLink) return { kind: "board-link", id: ds.boardLink }
+  if (ds.tableGrip || ds.tableAdd) {
+    const [axis, index] = (ds.tableGrip || ds.tableAdd).split(":")
+    return { kind: ds.tableGrip ? "table-grip" : "table-add", id: ds.owner, axis, index: Number(index) }
+  }
+  if (ds.tableBorder) {
+    const [axis, index] = ds.tableBorder.split(":")
+    return { kind: "table-border", id: hit.closest("[data-id]").dataset.id, axis, index: Number(index) }
+  }
   if (ds.handle) return { kind: "handle", handle: ds.handle }
   if (ds.anchor) return { kind: "anchor", id: ds.owner, side: ds.anchor }
   if (ds.plus) return { kind: "plus", id: ds.owner, side: ds.plus }
@@ -404,6 +485,8 @@ function nodesAt(r, { whole }) {
 
 function onDown(e) {
   quickMenu.value = null
+  // Cell being edited: starting point of a Maj + clic range
+  const editedBefore = store.editing?.cell ? { id: store.editing.id, cell: store.editing.cell } : null
   if (store.editing) store.editing = null
   root.value.setPointerCapture(e.pointerId)
   pointers.set(e.pointerId, screenOf(e))
@@ -440,7 +523,7 @@ function onDown(e) {
   }
   if (store.readOnly && hit.kind !== "bg") return
 
-  if (["shape", "sticky", "text", "frame"].includes(tool)) {
+  if (["shape", "sticky", "text", "frame", "table"].includes(tool)) {
     drag.value = { kind: "create", tool, start: w, cur: w, shift: false }
     return
   }
@@ -452,6 +535,17 @@ function onDown(e) {
   }
 
   switch (hit.kind) {
+    case "table-grip":
+      drag.value = { kind: "table-grip", id: hit.id, axis: hit.axis, index: hit.index, start: w, moved: false, at: hit.index }
+      break
+    case "table-add":
+      insertTableLine(hit.id, hit.axis, hit.index)
+      break
+    case "table-border": {
+      store.begin()
+      drag.value = { kind: "table-border", id: hit.id, axis: hit.axis, index: hit.index }
+      break
+    }
     case "handle":
       startResize(hit.handle, w)
       break
@@ -473,12 +567,26 @@ function onDown(e) {
     case "item": {
       const it = store.items[hit.id]
       const already = store.selection.includes(hit.id)
+      // Maj + clic on a table (alone in the selection, or not selected yet): cell / range of cells, to merge or color them.
+      // From the cell being edited, or from the cell already picked, the range goes to the clicked cell.
+      const editedCell = editedBefore?.id === hit.id ? editedBefore.cell : null
+      const alone = store.selection.length === 0 || (already && store.selection.length === 1)
+      if (e.shiftKey && it.type === "table" && !it.locked && (editedCell || alone)) {
+        const picked = store.tableSel?.id === it.id && store.tableSel.axis === "cells" ? store.tableSel.from : null
+        const from = editedCell || picked || gridAt(it, w)
+        if (!already) store.select([it.id])
+        store.tableSel = { id: it.id, axis: "cells", from, to: gridAt(it, w) }
+        drag.value = { kind: "cell-range", id: it.id }
+        return
+      }
       if (e.shiftKey) {
         const ids = store.withGroups([hit.id])
         store.select(already ? store.selection.filter((id) => !ids.includes(id)) : [...store.selection, ...ids])
         return
       }
       if (!already) store.select([hit.id])
+      // A plain click drops the picked cells (the next Maj + clic starts a new range)
+      if (store.tableSel?.axis === "cells") store.tableSel = null
       if (it.locked) return
       startMove(w, s, already ? hit.id : null)
       break
@@ -555,6 +663,26 @@ function onMove(e) {
       store.updateItem(d.id, { [d.end]: d.target || { x: w.x, y: w.y } })
       break
     }
+    case "cell-range": {
+      const table = store.items[d.id]
+      if (table && store.tableSel?.axis === "cells") store.tableSel = { ...store.tableSel, to: gridAt(table, w) }
+      break
+    }
+    case "table-grip": {
+      const table = store.items[d.id]
+      if (!table) return
+      if (!d.moved && dist(w, d.start) * view.zoom < 4) return
+      d.moved = true
+      d.at = dropIndex(table, d.axis, d.axis === "col" ? w.x - table.x : w.y - table.y)
+      break
+    }
+    case "table-border": {
+      const table = store.items[d.id]
+      if (!table) return
+      const pos = d.axis === "col" ? w.x - table.x : w.y - table.y
+      store.updateItem(d.id, moveBorder(table, d.axis, d.index, pos))
+      break
+    }
     case "label": {
       const conn = store.items[d.id]
       if (!conn) return
@@ -598,8 +726,24 @@ function onUp(e) {
     case "plus":
       createLinked(d.id, d.side)
       break
+    case "table-grip": {
+      const table = store.items[d.id]
+      if (!table) break
+      if (!d.moved) {
+        // Click: (un)select the column / row
+        const same = store.tableSel?.id === d.id && store.tableSel.axis === d.axis && store.tableSel.index === d.index
+        store.tableSel = same ? null : { id: d.id, axis: d.axis, index: d.index }
+        break
+      }
+      const to = d.at > d.index ? d.at - 1 : d.at
+      const patch = moveLine(table, d.axis, d.index, to)
+      if (patch) store.updateItem(d.id, patch)
+      store.tableSel = { id: d.id, axis: d.axis, index: patch ? to : d.index }
+      break
+    }
     case "end":
     case "label":
+    case "table-border":
       store.commit()
       break
   }
@@ -813,7 +957,8 @@ function finishCreate(d) {
   store.addItem(it)
   store.select([it.id])
   store.tool = "select"
-  if (hasText(it)) store.editing = { id: it.id }
+  if (it.type === "table") store.editing = { id: it.id, cell: [0, 0] }
+  else if (hasText(it)) store.editing = { id: it.id }
 }
 
 function finishConnect(d) {
@@ -907,12 +1052,18 @@ function onDblClick(e) {
       store.updateItem(it.id, { labels })
       store.select([it.id])
       store.editing = { id: it.id, label: labels.length - 1 }
+    } else if (it.type === "table") {
+      const cell = cellAt(it, w)
+      store.select([it.id])
+      if (cell) store.editing = { id: it.id, cell }
     } else if (hasText(it) || it.type === "frame") {
       store.select([it.id])
       store.editing = { id: it.id, selectAll: !!plainText(it.text).trim() }
     }
     return
   }
+  // Handles, anchors, table borders...: nothing to create there
+  if (hit.kind !== "bg") return
   // Double-click on the canvas creates a text
   const it = makeItem("text", { x: w.x, y: w.y - 16 })
   it.parent = parentAt(w)
@@ -971,7 +1122,7 @@ defineExpose({
   overflow: hidden;
   touch-action: none;
   user-select: none;
-  background: #fbfcfe;
+  background: var(--bg);
 
   &.grab {
     cursor: grab;
@@ -999,6 +1150,8 @@ defineExpose({
   [data-handle],
   [data-anchor],
   [data-plus],
+  [data-table-grip],
+  [data-table-add],
   [data-end] {
     pointer-events: all;
   }
@@ -1013,6 +1166,29 @@ defineExpose({
   }
 }
 
+.table-grip {
+  fill: var(--accent-border);
+  cursor: grab;
+
+  &:hover {
+    fill: #b9c3ec;
+  }
+
+  &.active {
+    fill: var(--accent);
+  }
+}
+
+.table-add {
+  cursor: pointer;
+  fill: var(--accent);
+  opacity: 0.35;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
 .quick-menu {
   position: absolute;
   z-index: 6;
@@ -1020,8 +1196,8 @@ defineExpose({
   flex-direction: column;
   min-width: 160px;
   padding: 6px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(27, 36, 51, 0.14);
 
@@ -1030,7 +1206,7 @@ defineExpose({
     font-size: 0.75em;
     font-weight: 700;
     text-transform: uppercase;
-    color: #8a909b;
+    color: var(--muted);
   }
 
   button {
@@ -1041,15 +1217,15 @@ defineExpose({
     border-radius: 6px;
     font: inherit;
     font-size: 0.9em;
-    color: #2e333d;
+    color: var(--text);
     cursor: pointer;
 
     &:hover {
-      background: #ecf1ff;
+      background: var(--accent-soft);
     }
 
     &.muted {
-      color: #8a909b;
+      color: var(--muted);
     }
   }
 }

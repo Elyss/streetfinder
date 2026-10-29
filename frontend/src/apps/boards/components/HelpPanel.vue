@@ -32,7 +32,7 @@ const GROUPS = [
     title: "Outils",
     items: [
       ["V", "Sélection"], ["H", "Main (déplacement)"], ["R", "Rectangle"], ["O", "Ellipse"], ["D", "Losange"],
-      ["S", "Sticky note"], ["T", "Texte"], ["L", "Connecteur"], ["F", "Cadre"], ["I", "Image"],
+      ["S", "Sticky note"], ["T", "Texte"], ["L", "Connecteur"], ["F", "Cadre"], ["G", "Tableau"], ["I", "Image"],
     ],
   },
   {
@@ -41,7 +41,7 @@ const GROUPS = [
       [`${mod} + Z`, "Annuler"], [`${mod} + Maj + Z`, "Rétablir"], [`${mod} + C`, "Copier"], [`${mod} + X`, "Couper"],
       [`${mod} + V`, "Coller"], [`${mod} + Maj + V`, "Coller à l'emplacement d'origine"], [`${mod} + D`, "Dupliquer"],
       [`${mod} + Alt + C`, "Copier le style"], [`${mod} + Alt + V`, "Coller le style"],
-      ["Suppr", "Supprimer"], ["Entrée", "Éditer le texte"], ["Échap", "Désélectionner / quitter l'édition"],
+      ["Suppr", "Supprimer"], ["Entrée", "Éditer le texte"], ["Tab / Maj + Tab", "Cellule suivante / précédente (tableau)"], ["Suppr", "Supprimer la colonne / ligne choisie par sa poignée (tableau)"], ["Échap", "Désélectionner / quitter l'édition"],
     ],
   },
   {
@@ -79,7 +79,7 @@ const GROUPS = [
   width: min(900px, 100%);
   max-height: calc(100vh - 32px);
   overflow: auto;
-  background: white;
+  background: var(--surface);
   border-radius: 14px;
   padding: 20px 24px;
   box-shadow: 0 20px 60px rgba(27, 36, 51, 0.25);
@@ -99,7 +99,7 @@ header {
     border: 0;
     background: none;
     cursor: pointer;
-    color: #5c626c;
+    color: var(--muted);
   }
 }
 
@@ -113,7 +113,7 @@ header {
 h3 {
   font-size: 0.78em;
   text-transform: uppercase;
-  color: #8a909b;
+  color: var(--muted);
   margin: 8px 0;
 }
 
@@ -131,7 +131,7 @@ dt {
 
 dd {
   margin: 0;
-  color: #424853;
+  color: var(--text);
 }
 
 kbd {
@@ -139,18 +139,18 @@ kbd {
   min-width: 18px;
   padding: 1px 5px;
   margin-right: 2px;
-  border: 1px solid #dbdee3;
+  border: 1px solid var(--border-strong);
   border-bottom-width: 2px;
   border-radius: 4px;
   font-family: inherit;
   font-size: 0.85em;
   text-align: center;
-  background: #f9fafd;
+  background: var(--bg-2);
 }
 
 .tip {
   margin: 18px 0 0;
   font-size: 0.85em;
-  color: #5c626c;
+  color: var(--muted);
 }
 </style>

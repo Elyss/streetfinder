@@ -2,18 +2,18 @@
   <g :transform="`translate(${item.x} ${item.y})`" :data-id="item.id" :opacity="style.opacity ?? 1">
     <!-- Frame: the body lets clicks through to the canvas (marquee), the title and border select it -->
     <template v-if="item.type === 'frame'">
-      <rect :width="item.w" :height="item.h" rx="8" :fill="style.fill || '#fff'" data-frame-body />
+      <rect :width="item.w" :height="item.h" rx="8" :fill="frameFill(style.fill)" data-frame-body />
       <rect :width="item.w" :height="item.h" rx="8" fill="none" :stroke="style.stroke || '#c5cad3'" stroke-width="1.5" style="pointer-events: stroke" />
-      <text x="2" y="-10" font-size="15" font-weight="600" :fill="style.textColor || '#5c626c'" :font-family="FONTS.sans" data-frame-title>
+      <text x="2" y="-10" font-size="15" font-weight="600" :fill="inkOf(style.textColor || '#5c626c', null)" :font-family="FONTS.sans" data-frame-title>
         {{ editingTitle ? "" : item.text || "Cadre" }}
       </text>
     </template>
 
     <template v-else-if="item.type === 'shape'">
-      <path :d="outline.d" :fill="style.fill" :stroke="style.stroke" :stroke-width="style.strokeWidth"
+      <path :d="outline.d" :fill="style.fill" :stroke="inkOf(style.stroke, item)" :stroke-width="style.strokeWidth"
         :stroke-dasharray="dashArray(style.strokeStyle, style.strokeWidth)" stroke-linejoin="round"
         stroke-linecap="round" :filter="style.shadow ? 'url(#sf-shadow)' : null" />
-      <path v-if="outline.decor" :d="outline.decor" fill="none" :stroke="style.stroke" :stroke-width="style.strokeWidth" />
+      <path v-if="outline.decor" :d="outline.decor" fill="none" :stroke="inkOf(style.stroke, item)" :stroke-width="style.strokeWidth" />
     </template>
 
     <template v-else-if="item.type === 'sticky'">
@@ -36,6 +36,30 @@
         :clip-path="style.radius ? `url(#clip-${item.id})` : null" />
     </template>
 
+    <!-- Table: cell backgrounds, grid, cell texts; borders draggable once selected -->
+    <template v-else-if="item.type === 'table'">
+      <rect :width="item.w" :height="item.h" :fill="style.fill || '#fff'" />
+      <template v-for="v in cellsShown" :key="'f' + v.r + ':' + v.c">
+        <rect v-if="cellFill(item, v.r, v.c)" :x="v.x" :y="v.y" :width="v.w" :height="v.h" :fill="cellFill(item, v.r, v.c)" />
+      </template>
+      <path :d="gridPath" fill="none" :stroke="style.stroke || '#c5cad3'" stroke-width="1" />
+      <rect :width="item.w" :height="item.h" fill="none" :stroke="style.stroke || '#c5cad3'" stroke-width="1.5" />
+      <template v-for="v in cellsShown" :key="'t' + v.r + ':' + v.c">
+        <foreignObject v-if="v.cell.text && !(editingCell && editingCell[0] === v.r && editingCell[1] === v.c)"
+          :x="v.x" :y="v.y" :width="v.w" :height="v.h" style="pointer-events: none">
+          <div xmlns="http://www.w3.org/1999/xhtml" :style="textBoxStyle(cellBox(item, v.r, v.c))">
+            <div :style="textContentStyle(cellBox(item, v.r, v.c))" v-html="iconsFor(sanitize(v.cell.text), surfaceOf(item, cellBox(item, v.r, v.c).style.fill))"></div>
+          </div>
+        </foreignObject>
+      </template>
+      <template v-if="selected && !item.locked">
+        <rect v-for="i in item.colFr.length - 1" :key="'bc' + i" :data-table-border="`col:${i - 1}`"
+          :x="layout.xs[i] - 4" y="0" width="8" :height="item.h" fill="transparent" style="cursor: col-resize" />
+        <rect v-for="i in item.rowFr.length - 1" :key="'br' + i" :data-table-border="`row:${i - 1}`"
+          x="0" :y="layout.ys[i] - 4" :width="item.w" height="8" fill="transparent" style="cursor: row-resize" />
+      </template>
+    </template>
+
     <!-- Link to another board: clickable chip under the object -->
     <g v-if="item.boardLink" :transform="`translate(0 ${item.h + 8})`" :data-board-link="item.boardLink.id" style="cursor: pointer">
       <title>Ouvrir le board « {{ item.boardLink.title }} »</title>
@@ -56,13 +80,19 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue"
 import { FONTS, dashArray, hasText } from "../lib/defaults"
 import { shapePath } from "../lib/geometry"
+import { cellBox, cellFill, gridPath as tableGrid, tableLayout, visibleCells } from "../lib/table"
 import { sanitize } from "../lib/sanitize"
 import { textBoxStyle, textContentStyle } from "../lib/text"
 import { mediaUrl } from "../lib/api"
+import { frameFill, inkOf, surfaceOf } from "../lib/theme"
+import { iconsFor } from "../lib/inputs"
 
 const props = defineProps({
   item: { type: Object, required: true },
   editing: { type: Boolean, default: false },
+  // Tables: cell being edited ([row, col]) and selection (shows the draggable borders)
+  editingCell: { type: Array, default: null },
+  selected: { type: Boolean, default: false },
 })
 
 const content = ref(null)
@@ -70,7 +100,8 @@ const fontScale = ref(1)
 
 const style = computed(() => props.item.style || {})
 const outline = computed(() => shapePath(props.item.shape, props.item.w, props.item.h))
-const html = computed(() => sanitize(props.item.text))
+// Input icons in the variant matching the text color
+const html = computed(() => iconsFor(sanitize(props.item.text), surfaceOf(props.item, props.item.type === "text" ? null : style.value.fill)))
 const src = computed(() => mediaUrl(props.item.src))
 const showText = computed(() => hasText(props.item) && !props.editing && props.item.text)
 const linkLabel = computed(() => {
@@ -78,6 +109,10 @@ const linkLabel = computed(() => {
   return t.length > 34 ? `${t.slice(0, 33)}…` : t
 })
 const linkWidth = computed(() => Math.round(linkLabel.value.length * 6.8 + 38))
+const layout = computed(() => (props.item.type === "table" ? tableLayout(props.item) : null))
+const gridPath = computed(() => (props.item.type === "table" ? tableGrid(props.item) : ""))
+// Cells drawn (merged areas as one cell)
+const cellsShown = computed(() => (props.item.type === "table" ? visibleCells(props.item) : []))
 const editingTitle = computed(() => props.item.type === "frame" && props.editing)
 
 // Sticky notes: the text shrinks to fit instead of overflowing

@@ -2,6 +2,7 @@
 // entering edit mode never makes the text jump.
 import { FONTS, fontSizeOf } from "./defaults"
 import { textInset } from "./geometry"
+import { inkOf } from "./theme"
 
 const JUSTIFY = { top: "flex-start", middle: "center", bottom: "flex-end" }
 
@@ -16,7 +17,8 @@ export function textBoxStyle(item) {
     display: "flex",
     flexDirection: "column",
     justifyContent: JUSTIFY[s.valign] || (item.type === "text" ? "flex-start" : "center"),
-    overflow: item.type === "sticky" ? "hidden" : "visible",
+    // Stickies shrink their text to fit, table cells cut it
+    overflow: item.type === "sticky" || item.type === "cell" ? "hidden" : "visible",
   }
 }
 
@@ -26,12 +28,16 @@ export function textContentStyle(item, fontScale = 1) {
     fontFamily: FONTS[s.font] || FONTS.sans,
     fontSize: `${fontSizeOf(s) * fontScale}px`,
     lineHeight: 1.35,
-    color: s.textColor || "#2e333d",
+    // Free texts (and shapes without fill) are drawn on the canvas, which may be dark
+    color: inkOf(s.textColor || "#2e333d", item.source || item, item.type === "text" ? null : s.fill),
     textAlign: s.align || (item.type === "text" ? "left" : "center"),
     overflowWrap: "anywhere",
     wordBreak: "break-word",
     outline: "none",
     minHeight: "1em",
+    // Keeps its natural height in a fixed-size box (needed to measure the text of a table cell)
+    flexShrink: 0,
+    fontWeight: item.bold ? 700 : undefined,
   }
 }
 

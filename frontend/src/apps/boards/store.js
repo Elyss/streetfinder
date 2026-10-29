@@ -9,6 +9,8 @@ const COLORS = ["#e5484d", "#f76b15", "#d6a400", "#30a46c", "#12a594", "#0090ff"
 
 // JSON copy rather than structuredClone: items may hold nested reactive proxies
 const clone = (v) => (v == null ? null : JSON.parse(JSON.stringify(v)))
+// Same object apart from its timestamp (a rewrite with the same content is not an undo step)
+const sameContent = (a, b) => JSON.stringify({ ...a, updatedAt: 0 }) === JSON.stringify({ ...b, updatedAt: 0 })
 
 function loadIdentity() {
   try {
@@ -35,6 +37,8 @@ export const useBoardStore = defineStore("board", () => {
   const selection = ref([])
   const view = reactive({ ox: 0, oy: 0, zoom: 1 })
   const editing = ref(null) // { id, label?: index }
+  // Column / row of a table picked with its grip: { id, axis: "col" | "row", index }
+  const tableSel = ref(null)
   const tool = ref("select")
   const shapeKind = ref("rect")
   const settings = reactive({ snapGrid: false, minimap: true })
@@ -158,7 +162,7 @@ export const useBoardStore = defineStore("board", () => {
     const changes = []
     for (const [id, before] of tx.before) {
       const after = clone(items[id])
-      if (JSON.stringify(before) !== JSON.stringify(after)) changes.push({ id, before, after })
+      if (!sameContent(before, after)) changes.push({ id, before, after })
     }
     tx = null
     if (changes.length) {
@@ -285,6 +289,7 @@ export const useBoardStore = defineStore("board", () => {
 
   function select(ids) {
     selection.value = withGroups(ids.filter((id) => items[id]))
+    if (tableSel.value && !(selection.value.length === 1 && selection.value[0] === tableSel.value.id)) tableSel.value = null
     sendPresence()
   }
 
@@ -474,7 +479,7 @@ export const useBoardStore = defineStore("board", () => {
   }
 
   return {
-    meta, items, selection, selectedItems, view, editing, tool, shapeKind, settings, status,
+    meta, items, selection, selectedItems, view, editing, tableSel, tool, shapeKind, settings, status,
     peers, me, exporting, canUndo, canRedo, role, readOnly,
     open, close, setMeta, sendPresence, setIdentity,
     begin, commit, mutate, addItem, updateItem, updateStyle, removeItems, undo, redo,

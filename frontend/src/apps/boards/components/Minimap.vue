@@ -13,6 +13,7 @@
 import { computed, ref } from "vue"
 import { union } from "../lib/geometry"
 import { useBoardStore } from "../store"
+import { frameFill } from "../lib/theme"
 
 const props = defineProps({ viewport: { type: Object, required: true } })
 const emit = defineEmits(["navigate"])
@@ -25,7 +26,7 @@ const rects = computed(() => {
   const out = []
   for (const it of Object.values(store.items)) {
     if (it.type === "connector") continue
-    const fill = it.type === "frame" ? "#ffffff" : it.type === "image" ? "#c5cad3" : it.type === "text" ? "#dbdee3" : it.style?.fill || "#c5cad3"
+    const fill = it.type === "frame" ? frameFill(it.style?.fill) : it.type === "image" ? "#c5cad3" : it.type === "text" ? "#dbdee3" : it.style?.fill || "#c5cad3"
     out.push({ id: it.id, x: it.x, y: it.y, w: it.w, h: it.h, fill: fill === "transparent" ? "#dbdee3" : fill, frame: it.type === "frame" })
   }
   return out.sort((a, b) => b.frame - a.frame)
@@ -61,8 +62,8 @@ function onMove(e) {
   right: 12px;
   bottom: 64px;
   z-index: 8;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 4px 16px rgba(27, 36, 51, 0.08);
   overflow: hidden;

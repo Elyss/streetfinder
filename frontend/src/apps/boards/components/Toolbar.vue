@@ -58,6 +58,7 @@ const TOOLS = [
   { key: "text", label: "Texte", icon: "text", shortcut: "T" },
   { key: "connector", label: "Connecteur", icon: "connector", shortcut: "L" },
   { key: "frame", label: "Cadre", icon: "frame", shortcut: "F" },
+  { key: "table", label: "Tableau", icon: "table", shortcut: "G" },
   { key: "image", label: "Image", icon: "image", shortcut: "I" },
 ]
 
@@ -93,8 +94,8 @@ defineExpose({ closeFlyout: () => (shapesOpen.value = false) })
   flex-direction: column;
   gap: 2px;
   padding: 6px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(27, 36, 51, 0.08);
 
@@ -106,16 +107,16 @@ defineExpose({ closeFlyout: () => (shapesOpen.value = false) })
     border: 0;
     border-radius: 8px;
     background: none;
-    color: #424853;
+    color: var(--text);
     cursor: pointer;
 
     &:hover:not(:disabled) {
-      background: #f1f3f6;
+      background: var(--surface-2);
     }
 
     &.active {
-      background: #ecf1ff;
-      color: #4554b2;
+      background: var(--accent-soft);
+      color: var(--accent-hover);
     }
 
     &:disabled {
@@ -128,7 +129,7 @@ defineExpose({ closeFlyout: () => (shapesOpen.value = false) })
 .sep {
   height: 1px;
   margin: 4px 6px;
-  background: #e5e9f0;
+  background: var(--border);
 }
 
 .flyout {
@@ -137,8 +138,8 @@ defineExpose({ closeFlyout: () => (shapesOpen.value = false) })
   top: 60px;
   width: 196px;
   padding: 8px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(27, 36, 51, 0.14);
 
@@ -147,7 +148,7 @@ defineExpose({ closeFlyout: () => (shapesOpen.value = false) })
     font-size: 0.72em;
     font-weight: 700;
     text-transform: uppercase;
-    color: #8a909b;
+    color: var(--muted);
   }
 
   .grid {
@@ -166,8 +167,8 @@ defineExpose({ closeFlyout: () => (shapesOpen.value = false) })
 
     &:hover,
     &.active {
-      background: #f4f6fb;
-      border-color: #d4ddf9;
+      background: var(--bg-2);
+      border-color: var(--accent-border);
     }
   }
 }

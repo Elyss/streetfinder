@@ -71,6 +71,32 @@
     font-family: var(--font-body);
 }
 
+// Boards in dark mode (choice of the viewer): neutral slate, blue accent like the light boards
+.light-theme.board-dark{
+    --bg: #1b1d22;
+    --bg-2: #202228;
+    --surface: #262930;
+    --surface-2: #30333c;
+    --border: #383c47;
+    --border-strong: #474c59;
+    --text: #e4e6ec;
+    --muted: #9ba1ae;
+
+    --accent: #7d8cf0;
+    --accent-hover: #9aa6f6;
+    --accent-soft: #2e3454;
+    --accent-border: #424a7c;
+    --on-accent: #ffffff;
+
+    --danger: #f06a6a;
+    --danger-soft: #42262a;
+    --success: #4cc489;
+    --success-soft: #1f3b2e;
+    --warning-soft: #3d3322;
+
+    color-scheme: dark;
+}
+
 // ------------------------------------------------------------------ base
 body{
     background-color: var(--bg);

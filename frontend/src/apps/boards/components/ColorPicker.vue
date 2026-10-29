@@ -64,12 +64,12 @@ function submitHex() {
   cursor: pointer;
 
   &.active {
-    outline: 2px solid #5366ce;
+    outline: 2px solid var(--accent);
     outline-offset: 1px;
   }
 
   &.none {
-    background: linear-gradient(135deg, #fff 45%, #da3838 45%, #da3838 55%, #fff 55%);
+    background: linear-gradient(135deg, var(--surface) 45%, var(--danger) 45%, var(--danger) 55%, var(--surface) 55%);
   }
 }
 
@@ -83,7 +83,7 @@ function submitHex() {
     width: 20px;
     height: 20px;
     border-radius: 4px;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
   }
 
   input {
@@ -92,7 +92,7 @@ function submitHex() {
     font: inherit;
     font-size: 0.85em;
     padding: 4px 6px;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
   }
 
@@ -102,8 +102,8 @@ function submitHex() {
     padding: 4px 8px;
     border: 0;
     border-radius: 6px;
-    background: #ecf1ff;
-    color: #4554b2;
+    background: var(--accent-soft);
+    color: var(--accent-hover);
     cursor: pointer;
   }
 }

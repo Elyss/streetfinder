@@ -36,6 +36,15 @@ export async function buildSvg(svgEl, bounds, { ids = null, background = "#fffff
     }
   }))
 
+  // Same for the input icons in the texts
+  await Promise.all([...clone.querySelectorAll("img[data-input]")].map(async (img) => {
+    try {
+      img.setAttribute("src", await toDataUrl(img.getAttribute("src")))
+    } catch {
+      img.remove()
+    }
+  }))
+
   const w = Math.ceil(bounds.w + PADDING * 2), h = Math.ceil(bounds.h + PADDING * 2)
   world.setAttribute("transform", `translate(${PADDING - bounds.x} ${PADDING - bounds.y})`)
   clone.setAttribute("width", w)

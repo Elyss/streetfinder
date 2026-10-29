@@ -113,7 +113,7 @@ onMounted(() => run(() => boardsApi.share(props.boardId)))
   max-height: calc(100vh - 32px);
   overflow: auto;
   padding: 20px 24px;
-  background: white;
+  background: var(--surface);
   border-radius: 14px;
   box-shadow: 0 20px 60px rgba(27, 36, 51, 0.25);
 }
@@ -131,7 +131,7 @@ header {
   button {
     border: 0;
     background: none;
-    color: #5c626c;
+    color: var(--muted);
     cursor: pointer;
   }
 }
@@ -140,12 +140,12 @@ header {
   margin: 8px 0 16px;
   font-size: 0.86em;
   line-height: 1.45;
-  color: #5c626c;
+  color: var(--muted);
 }
 
 .link-row {
   padding: 12px 0;
-  border-top: 1px solid #f1f3f6;
+  border-top: 1px solid var(--surface-2);
 }
 
 .link-head {
@@ -162,7 +162,7 @@ header {
 
   span {
     font-size: 0.85em;
-    color: #8a909b;
+    color: var(--muted);
   }
 }
 
@@ -175,12 +175,12 @@ header {
     flex: 1;
     min-width: 0;
     padding: 0.5rem 0.7rem;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
     font: inherit;
     font-size: 0.85em;
-    color: #424853;
-    background: #f9fafd;
+    color: var(--text);
+    background: var(--bg-2);
   }
 
   .btn {
@@ -192,11 +192,11 @@ header {
     background: none;
     font: inherit;
     font-size: 0.85em;
-    color: #5c626c;
+    color: var(--muted);
     cursor: pointer;
 
     &:hover {
-      color: #4354b9;
+      color: var(--accent-hover);
     }
   }
 }
@@ -209,7 +209,7 @@ header {
   padding: 0;
   border: 0;
   border-radius: 11px;
-  background: #dbdee3;
+  background: var(--border-strong);
   cursor: pointer;
   transition: background-color 0.15s;
 
@@ -220,12 +220,12 @@ header {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: white;
+    background: var(--surface);
     transition: transform 0.15s;
   }
 
   &.on {
-    background: #2FA46A;
+    background: var(--success);
 
     span {
       transform: translateX(16px);
@@ -248,7 +248,7 @@ h3 {
     align-items: center;
     gap: 10px;
     padding: 8px 0;
-    border-bottom: 1px solid #f1f3f6;
+    border-bottom: 1px solid var(--surface-2);
   }
 
   .who {
@@ -259,7 +259,7 @@ h3 {
 
     span {
       font-size: 0.82em;
-      color: #8a909b;
+      color: var(--muted);
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -269,7 +269,7 @@ h3 {
     font: inherit;
     font-size: 0.88em;
     padding: 4px 6px;
-    border: 1px solid #dbdee3;
+    border: 1px solid var(--border-strong);
     border-radius: 6px;
   }
 
@@ -280,12 +280,12 @@ h3 {
     border: 0;
     border-radius: 6px;
     background: none;
-    color: #8a909b;
+    color: var(--muted);
     cursor: pointer;
 
     &:hover {
-      background: #FBE6E4;
-      color: #C62525;
+      background: var(--danger-soft);
+      color: var(--danger);
     }
   }
 }

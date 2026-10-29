@@ -1,3 +1,5 @@
+import { emptyCells } from "./table"
+
 // Catalog, palette and default styles of the board objects.
 
 export const GRID = 20
@@ -88,6 +90,10 @@ const DEFAULT_STYLES = {
   text: { textColor: "#2e333d", fontSize: "m", font: "sans", align: "left", valign: "top" },
   frame: { fill: "#ffffff", stroke: "#c5cad3", textColor: "#5c626c" },
   image: { radius: 0, opacity: 1 },
+  table: {
+    fill: "#ffffff", stroke: "#c5cad3", textColor: "#2e333d", fontSize: "s", font: "sans",
+    align: "left", valign: "middle", header: true, headerFill: "#ecf1ff",
+  },
   connector: {
     stroke: "#424853", strokeWidth: 2, strokeStyle: "solid", route: "elbow",
     rounded: true, startCap: "none", endCap: "arrow", textColor: "#2e333d",
@@ -100,6 +106,7 @@ export const DEFAULT_SIZES = {
   text: { w: 200, h: 32 },
   frame: { w: 640, h: 420 },
   image: { w: 320, h: 240 },
+  table: { w: 420, h: 132 },
 }
 
 export const hasText = (it) => ["shape", "sticky", "text"].includes(it.type)
@@ -143,6 +150,11 @@ export function makeItem(type, props = {}) {
   }
   if (type === "shape" && !item.shape) item.shape = "rect"
   if (type === "frame" && !item.text) item.text = "Cadre"
+  if (type === "table") {
+    item.colFr ??= [1, 1, 1]
+    item.rowFr ??= [1, 1, 1]
+    item.cells ??= emptyCells(item.rowFr.length, item.colFr.length)
+  }
   if (type === "connector") {
     delete item.w
     delete item.h

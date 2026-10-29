@@ -7,6 +7,15 @@
         <Icon :name="c.icon" />
       </button>
       <button type="button" title="Lien" @click="addLink"><Icon name="link" /></button>
+      <div class="menu">
+        <button type="button" title="Notation SF6 (icônes, manette)" :class="{ active: open === 'inputs' }" @click="toggle('inputs')">
+          <Icon name="gamepad" />
+        </button>
+        <!-- Always above the bar, away from the edited text; scrolls when the room above is short -->
+        <div v-if="open === 'inputs'" class="popover up palette" :style="{ maxHeight: `${paletteRoom}px` }">
+          <InputPalette @insert="(html) => emit('command', 'insertHTML', html)" />
+        </div>
+      </div>
       <span class="sep"></span>
     </template>
 
@@ -87,16 +96,16 @@
       </template>
 
       <!-- Text -->
-      <template v-if="has('shape', 'sticky', 'text') && !has('connector', 'image', 'frame')">
+      <template v-if="has('shape', 'sticky', 'text', 'table') && !has('connector', 'image', 'frame')">
         <span class="sep"></span>
         <div class="menu">
           <button type="button" class="wide" title="Taille du texte" @click="toggle('size')">{{ FONT_SIZE_LABELS[first.style?.fontSize || "m"] }} ▾</button>
           <div v-if="open === 'size'" class="popover list">
             <button v-for="(label, k) in FONT_SIZE_LABELS" :key="k" type="button" :class="{ active: (first.style?.fontSize || 'm') === k }"
-              @click="setStyle({ fontSize: k }, 'shape', 'sticky', 'text'); open = null">{{ label }}</button>
+              @click="setStyle({ fontSize: k }, 'shape', 'sticky', 'text', 'table'); open = null">{{ label }}</button>
             <span class="sep-h"></span>
             <button v-for="(label, k) in FONT_LABELS" :key="k" type="button" :class="{ active: (first.style?.font || 'sans') === k }"
-              :style="{ fontFamily: FONTS[k] }" @click="setStyle({ font: k }, 'shape', 'sticky', 'text'); open = null">{{ label }}</button>
+              :style="{ fontFamily: FONTS[k] }" @click="setStyle({ font: k }, 'shape', 'sticky', 'text', 'table'); open = null">{{ label }}</button>
           </div>
         </div>
         <div class="menu">
@@ -105,12 +114,12 @@
           </button>
           <div v-if="open === 'align'" class="popover options">
             <button v-for="a in ['left', 'center', 'right']" :key="a" type="button" :class="{ active: (first.style?.align || 'center') === a }"
-              :title="{ left: 'Gauche', center: 'Centre', right: 'Droite' }[a]" @click="setStyle({ align: a }, 'shape', 'sticky', 'text')">
+              :title="{ left: 'Gauche', center: 'Centre', right: 'Droite' }[a]" @click="setStyle({ align: a }, 'shape', 'sticky', 'text', 'table')">
               {{ { left: "⟸", center: "≡", right: "⟹" }[a] }}
             </button>
             <span class="sep"></span>
             <button v-for="v in ['top', 'middle', 'bottom']" :key="v" type="button" :class="{ active: (first.style?.valign || 'middle') === v }"
-              :title="{ top: 'Haut', middle: 'Milieu', bottom: 'Bas' }[v]" @click="setStyle({ valign: v }, 'shape', 'sticky', 'text')">
+              :title="{ top: 'Haut', middle: 'Milieu', bottom: 'Bas' }[v]" @click="setStyle({ valign: v }, 'shape', 'sticky', 'text', 'table')">
               {{ { top: "⤒", middle: "↕", bottom: "⤓" }[v] }}
             </button>
           </div>
@@ -120,7 +129,55 @@
             <span class="text-a" :style="{ borderColor: first.style?.textColor }">A</span>
           </button>
           <div v-if="open === 'textColor'" class="popover">
-            <ColorPicker :value="first.style?.textColor" :tones="['dark']" @pick="(c) => setStyle({ textColor: c }, 'shape', 'sticky', 'text', 'connector', 'frame')" />
+            <ColorPicker :value="first.style?.textColor" :tones="['dark']" @pick="(c) => setStyle({ textColor: c }, 'shape', 'sticky', 'text', 'table', 'connector', 'frame')" />
+          </div>
+        </div>
+      </template>
+
+      <!-- Table -->
+      <template v-if="onlyType === 'table' && items.length === 1">
+        <div class="menu">
+          <button type="button" class="wide" title="Lignes et colonnes" @click="toggle('table')">Tableau ▾</button>
+          <div v-if="open === 'table'" class="popover list">
+            <template v-if="cellArea">
+              <p class="popover-title">{{ cellArea.rs * cellArea.cs > 1 ? `Cellules (${cellArea.rs} × ${cellArea.cs})` : "Cellule" }}</p>
+              <button type="button" :disabled="!canMerge" @click="mergeArea">Fusionner les cellules</button>
+              <button type="button" :disabled="!mergedInArea.length" @click="splitArea">Séparer les cellules</button>
+              <p v-if="!canMerge && !mergedInArea.length" class="popover-hint wrap">Maj + clic (ou Maj + glisser) sur d'autres cellules pour en sélectionner plusieurs.</p>
+              <span class="sep-h"></span>
+            </template>
+            <template v-for="axis in ['col', 'row']" :key="axis">
+              <template v-if="tableTarget[axis] !== undefined">
+                <p class="popover-title">{{ axis === "col" ? "Colonne" : "Ligne" }} {{ tableTarget[axis] + 1 }}</p>
+                <button v-for="op in LINE_OPS[axis]" :key="op.op" type="button" :disabled="!lineOpAllowed(axis, op.op)"
+                  @click="tableEdit(op.op, axis)">{{ op.label }}</button>
+                <span class="sep-h"></span>
+              </template>
+            </template>
+            <template v-if="tableTarget.col === undefined && tableTarget.row === undefined">
+              <button type="button" @click="tableEdit('append', 'row')">Ajouter une ligne à la fin</button>
+              <button type="button" @click="tableEdit('append', 'col')">Ajouter une colonne à la fin</button>
+              <p class="popover-hint wrap">Clique la poignée d'une colonne (au-dessus) ou d'une ligne (à gauche) pour insérer, déplacer ou supprimer à cet endroit. Les « + » insèrent entre deux.</p>
+              <span class="sep-h"></span>
+            </template>
+            <label class="check"><input type="checkbox" :checked="!!first.style?.header"
+              @change="setStyle({ header: $event.target.checked }, 'table')" /> Ligne d'en-tête</label>
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" :title="cellArea ? 'Couleur des cellules' : 'Couleur du tableau'" @click="toggle('tableFill')">
+            <span class="chip" :style="{ background: cellArea ? cellColor : first.style?.fill }"></span>
+          </button>
+          <div v-if="open === 'tableFill'" class="popover">
+            <ColorPicker :value="cellArea ? cellColor : first.style?.fill" :tones="['light', 'mid']" @pick="pickTableFill" />
+          </div>
+        </div>
+        <div class="menu">
+          <button type="button" title="Couleur des bordures" @click="toggle('tableStroke')">
+            <span class="chip ring" :style="{ borderColor: first.style?.stroke }"></span>
+          </button>
+          <div v-if="open === 'tableStroke'" class="popover">
+            <ColorPicker :value="first.style?.stroke" :tones="['mid', 'dark']" @pick="(c) => setStyle({ stroke: c }, 'table')" />
           </div>
         </div>
       </template>
@@ -204,6 +261,8 @@ import {
 } from "../lib/defaults"
 import { useBoardStore } from "../store"
 import { boardsApi } from "../lib/api"
+import InputPalette from "./InputPalette.vue"
+import { cellFill, cellRange, cellRect, insertCol, insertRow, mergeCells, moveLine, removeCol, removeRow } from "../lib/table"
 import { shapePath } from "../lib/geometry"
 
 const props = defineProps({
@@ -240,6 +299,122 @@ const allLocked = computed(() => items.value.length > 0 && items.value.every((it
 const grouped = computed(() => items.value.length > 1 && items.value.every((it) => it.group && it.group === items.value[0].group))
 const editing = computed(() => store.editing)
 
+// Table: cell being edited, target of the row / column operations and of the cell color
+const currentCell = computed(() => (editing.value?.cell && editing.value.id === first.value.id ? editing.value.cell : null))
+// Cells targeted by merge / split / color: the range picked with Maj + clic, or the cell being edited
+const cellArea = computed(() => {
+  const t = store.tableSel
+  const it = first.value
+  if (t?.axis === "cells" && t.id === it.id) {
+    const a = cellRange(it, t.from, t.to)
+    return a.r + a.rs <= it.rowFr.length && a.c + a.cs <= it.colFr.length ? a : null
+  }
+  if (!currentCell.value) return null
+  const box = cellRect(it, ...currentCell.value)
+  return { r: box.r, c: box.c, rs: box.rs, cs: box.cs }
+})
+const cellColor = computed(() => (cellArea.value ? cellFill(first.value, cellArea.value.r, cellArea.value.c) || first.value.style?.fill : null))
+const mergedInArea = computed(() => {
+  const a = cellArea.value
+  return a ? (first.value.merges || []).filter((m) => m.r >= a.r && m.r + m.rs <= a.r + a.rs && m.c >= a.c && m.c + m.cs <= a.c + a.cs) : []
+})
+// Already a single merged area: nothing more to merge
+const canMerge = computed(() => {
+  const a = cellArea.value
+  if (!a || a.rs * a.cs < 2) return false
+  const m = mergedInArea.value
+  return !(m.length === 1 && m[0].rs === a.rs && m[0].cs === a.cs)
+})
+
+function mergeArea() {
+  const a = cellArea.value
+  const patch = mergeCells(first.value, [a.r, a.c], [a.r + a.rs - 1, a.c + a.cs - 1])
+  if (!patch) return
+  store.updateItem(first.value.id, patch)
+  store.tableSel = { id: first.value.id, axis: "cells", from: [a.r, a.c], to: [a.r, a.c] }
+}
+
+function splitArea() {
+  const inside = new Set(mergedInArea.value)
+  store.updateItem(first.value.id, { merges: (first.value.merges || []).filter((m) => !inside.has(m)).map((m) => ({ ...m })) })
+}
+
+// Target of the row / column operations: the cell being edited, or the column / row picked with its grip
+const tableTarget = computed(() => {
+  if (currentCell.value) return { row: currentCell.value[0], col: currentCell.value[1] }
+  if (cellArea.value) return { row: cellArea.value.r, col: cellArea.value.c }
+  const t = store.tableSel
+  return t && t.id === first.value.id ? { [t.axis]: t.index } : {}
+})
+
+const LINE_OPS = {
+  col: [
+    { op: "before", label: "Insérer une colonne à gauche" },
+    { op: "after", label: "Insérer une colonne à droite" },
+    { op: "back", label: "Déplacer vers la gauche" },
+    { op: "forward", label: "Déplacer vers la droite" },
+    { op: "remove", label: "Supprimer la colonne" },
+  ],
+  row: [
+    { op: "before", label: "Insérer une ligne au-dessus" },
+    { op: "after", label: "Insérer une ligne en dessous" },
+    { op: "back", label: "Déplacer vers le haut" },
+    { op: "forward", label: "Déplacer vers le bas" },
+    { op: "remove", label: "Supprimer la ligne" },
+  ],
+}
+
+const lineCount = (axis) => (axis === "col" ? first.value.colFr : first.value.rowFr).length
+
+function lineOpAllowed(axis, op) {
+  const i = tableTarget.value[axis]
+  if (op === "back") return i > 0
+  if (op === "forward") return i < lineCount(axis) - 1
+  if (op === "remove") return lineCount(axis) > 1
+  return true
+}
+
+function tableEdit(op, axis) {
+  const it = first.value
+  const i = op === "append" ? lineCount(axis) : tableTarget.value[axis]
+  const insert = axis === "col" ? insertCol : insertRow
+  const remove = axis === "col" ? removeCol : removeRow
+  // Index of the target line once the operation is done (null: it is gone)
+  const plan = {
+    append: () => [insert(it, i), i],
+    before: () => [insert(it, i), i],
+    after: () => [insert(it, i + 1), i + 1],
+    back: () => [moveLine(it, axis, i, i - 1), i - 1],
+    forward: () => [moveLine(it, axis, i, i + 1), i + 1],
+    remove: () => [remove(it, i), null],
+  }[op]
+  const [patch, index] = plan()
+  if (!patch) return
+  const cell = currentCell.value
+  store.updateItem(it.id, patch)
+  if (cell) {
+    // Keep editing the same cell, wherever it went
+    const k = axis === "row" ? 0 : 1
+    const next = [...cell]
+    if (op === "remove") return (store.editing = null)
+    if (op === "before" || op === "append") next[k] = cell[k] + (op === "before" ? 1 : 0)
+    if (op === "back" || op === "forward") next[k] = index
+    store.editing = { id: it.id, cell: next }
+  } else {
+    store.tableSel = index === null ? null : { id: it.id, axis, index }
+  }
+}
+
+function pickTableFill(color) {
+  const a = cellArea.value
+  if (!a) return setStyle({ fill: color }, "table")
+  const it = first.value
+  const fill = color === "transparent" ? null : color
+  const cells = it.cells.map((row) => row.map((cell) => ({ ...cell })))
+  for (let r = a.r; r < a.r + a.rs; r++) for (let c = a.c; c < a.c + a.cs; c++) cells[r][c].fill = fill
+  store.updateItem(it.id, { cells })
+}
+
 const shapeChoices = [...SHAPES, ...FLOWCHART_SHAPES.filter((f) => !SHAPES.some((x) => x.key === f.key))]
 const shownColor = (color, fallback) => (!color || color === "transparent" ? fallback : color)
 const thumbFill = computed(() => shownColor(first.value.style?.fill, "#ecf1ff"))
@@ -265,16 +440,20 @@ function setBoardLink(board) {
 }
 const editingRich = computed(() => {
   const it = editing.value && store.items[editing.value.id]
-  return it && ["shape", "sticky", "text"].includes(it.type)
+  return it && ["shape", "sticky", "text", "table"].includes(it.type)
 })
 
 const visible = computed(() => items.value.length > 0 && !props.busy && (!editing.value || editingRich.value))
+
+// Room above the bar for the notation palette (the bar top, minus the popover gap and a margin)
+const paletteRoom = computed(() => Math.max(90, parseFloat(position.value.top || 0) - 16))
 
 const position = computed(() => {
   const b = store.boundsOf(ids.value)
   if (!b) return {}
   const { zoom, ox, oy } = store.view
-  const top = b.y * zoom + oy - 56
+  // A selected table has its column grips and "+" above it
+  const top = b.y * zoom + oy - (onlyType.value === "table" && items.value.length === 1 ? 82 : 56)
   const below = (b.y + b.h) * zoom + oy + 16
   const cx = (b.x + b.w / 2) * zoom + ox
   const left = Math.max(8, Math.min(props.canvasSize.w - barWidth.value - 8, cx - barWidth.value / 2))
@@ -282,6 +461,11 @@ const position = computed(() => {
 })
 
 watch(ids, () => (open.value = null))
+// A column / row picked with its grip: its operations right away
+watch(() => store.tableSel, (t) => {
+  if (t) open.value = "table"
+  else if (open.value === "table" && !currentCell.value) open.value = null
+})
 watch([visible, ids, editingRich, open], async () => {
   await nextTick()
   if (bar.value) barWidth.value = bar.value.offsetWidth
@@ -328,8 +512,8 @@ defineExpose({ close: () => (open.value = null) })
   align-items: center;
   gap: 2px;
   padding: 4px;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 6px 20px rgba(27, 36, 51, 0.12);
   white-space: nowrap;
@@ -345,17 +529,17 @@ defineExpose({ close: () => (open.value = null) })
     border: 0;
     border-radius: 6px;
     background: none;
-    color: #424853;
+    color: var(--text);
     font: inherit;
     cursor: pointer;
 
     &:hover:not(:disabled) {
-      background: #f1f3f6;
+      background: var(--surface-2);
     }
 
     &.active {
-      background: #ecf1ff;
-      color: #4554b2;
+      background: var(--accent-soft);
+      color: var(--accent-hover);
     }
 
     &.wide {
@@ -372,13 +556,13 @@ defineExpose({ close: () => (open.value = null) })
   width: 1px;
   align-self: stretch;
   margin: 4px 3px;
-  background: #e5e9f0;
+  background: var(--border);
 }
 
 .sep-h {
   height: 1px;
   margin: 4px 0;
-  background: #e5e9f0;
+  background: var(--border);
 }
 
 .menu {
@@ -390,14 +574,24 @@ defineExpose({ close: () => (open.value = null) })
   top: calc(100% + 8px);
   left: 0;
   z-index: 2;
-  background: white;
-  border: 1px solid #e5e9f0;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(27, 36, 51, 0.14);
 
   &.right {
     left: auto;
     right: 0;
+  }
+
+  &.up {
+    top: auto;
+    bottom: calc(100% + 8px);
+  }
+
+  &.palette {
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   &.list {
@@ -445,12 +639,18 @@ defineExpose({ close: () => (open.value = null) })
   font-size: 0.75em;
   font-weight: 700;
   text-transform: uppercase;
-  color: #8a909b;
+  color: var(--muted);
 }
 
 .popover-hint {
   margin: 4px 10px 8px;
-  color: #8a909b;
+  color: var(--muted);
+
+  &.wrap {
+    max-width: 230px;
+    white-space: normal;
+    line-height: 1.35;
+  }
 }
 
 .shapes {
@@ -491,7 +691,7 @@ defineExpose({ close: () => (open.value = null) })
   }
 
   &.none {
-    background: linear-gradient(135deg, #fff 45%, #da3838 45%, #da3838 55%, #fff 55%) !important;
+    background: linear-gradient(135deg, var(--surface) 45%, var(--danger) 45%, var(--danger) 55%, var(--surface) 55%) !important;
   }
 }
 
